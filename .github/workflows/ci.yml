@@ -33,7 +33,15 @@ jobs:
       - run: npm run db:migrate
       - run: npm run gate:merge
       - name: Install PostgreSQL archive tools
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
       - name: Verify independent archive and recovered application
         env:
           PG_BIN: /usr/lib/postgresql/17/bin
@@ -65,7 +73,9 @@ jobs:
             -e AUTH_SECRET=ci-container-startup-only \
             -e AUTH_TRUST_HOST=true teampulse:ci
           trap 'docker logs teampulse-smoke; docker rm -f teampulse-smoke' EXIT
-          curl --retry 20 --retry-connrefused --retry-delay 1 --fail \
-            http://127.0.0.1:3200/signin | grep -q 'Sign in with GitHub'
+          curl --retry 20 --retry-all-errors --retry-delay 1 --max-time 5 \
+            --retry-max-time 60 --fail --silent --show-error \
+            --output "$RUNNER_TEMP/teampulse-signin.html" http://127.0.0.1:3200/signin
+          grep -q 'Sign in with GitHub' "$RUNNER_TEMP/teampulse-signin.html"
       - name: Scan container
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.67.2 image --exit-code 1 --severity HIGH,CRITICAL teampulse:ci

@@ -76,6 +76,16 @@ scanning. The startup check deliberately uses an unreachable dummy database:
 it verifies runtime compatibility, not database health. Container build and
 scanner results for this remediation must be recorded after execution.
 
+The first remediation run,
+[40470631941](https://github.com/guyvanput/TeamPulse/actions/runs/40470631941),
+built the distroless image and passed the merge acceptance gate, but failed two
+new harness steps: Ubuntu's default repositories lacked PostgreSQL 17 client
+packages, and the first container HTTP request hit a startup connection reset.
+CI now adds PostgreSQL's signed official apt repository and uses bounded retries
+for transient startup errors before asserting the actual sign-in-page content.
+The strict vulnerability scan remains unchanged; that failed run did not reach
+it and is not scan-pass evidence.
+
 ## Repeatable automated evidence
 
 From the project root:
@@ -97,9 +107,12 @@ After publication, `.github/workflows/pilot-check.yml` adds:
   a successful Vercel commit status. It also runs the hosted smoke.
 
 In GitHub Actions, enable notifications for failed runs. Guy Van Put is the
-initial pilot operator and feedback triage owner. A failed daily run requires
-operator investigation; this is a daily smoke, not continuous monitoring or an
-availability SLA.
+pilot operator and human approval authority; AI prepares feedback triage and
+verification on demand for the spec-driven demonstration. No manual
+after-every-session triage cadence or scheduled AI agent is assumed. A failed
+daily run requires investigation; this is a daily smoke, not continuous
+monitoring or an availability SLA. See `docs/SPEC_DRIVEN_PROCESS.md` for the
+AI/human responsibilities and executable harness.
 
 Before running the manual check, use `vercel inspect` on the production origin
 and compare its deployment ID with the Vercel status attached to the candidate
