@@ -1,0 +1,34 @@
+name: Release readiness
+description: Track release evidence and human approval; an online deployment alone is not release acceptance.
+title: "[Release] Pilot readiness "
+body:
+  - type: input
+    id: candidate
+    attributes:
+      label: Candidate
+      description: Full commit SHA, production origin, and Vercel deployment ID.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Release evidence
+      value: |
+        - [ ] CI is green for the deployed commit, including secret/dependency/container scans.
+        - [ ] Vercel inspect confirms Ready, production alias, and matching Git SHA.
+        - [ ] Read-only hosted smoke passes; link output or workflow artifact.
+        - [ ] Provisioned user signs in through real GitHub OAuth on the production origin.
+        - [ ] Two-session capture/follow-up/completion/history journey succeeds with synthetic pilot data.
+        - [ ] Sign-out and unprovisioned access denial are verified.
+        - [ ] Backup/restore drill succeeds on an isolated target; record recovery time and retention.
+        - [ ] Feedback owner, review date, and issue intake are confirmed.
+        - [ ] Project owner explicitly approves pilot acceptance, with remaining limitations recorded.
+    validations:
+      required: true
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers and decisions
+      description: Owner, next action, evidence link, and decision for each failed or unverified check. Do not silently waive gates.
+    validations:
+      required: true

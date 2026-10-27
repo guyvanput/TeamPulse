@@ -1,0 +1,53 @@
+name: Pilot feedback
+description: Report a pilot defect, usability problem, or improvement opportunity.
+title: "[Pilot] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic examples only. Do not paste credentials, connection strings, cookies, OAuth codes, or real team/customer data.
+        For a suspected security issue, stop and contact the project owner privately rather than including exploit details in this public issue.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feedback category
+      options:
+        - Defect
+        - Usability friction
+        - Improvement idea
+    validations:
+      required: true
+  - type: input
+    id: release
+    attributes:
+      label: Release and environment
+      description: Public deployment URL, tested date, and commit SHA if known. Write unknown rather than guessing.
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: What happened and what was expected
+      description: Include the task, steps to reproduce, expected result, and actual result. An idea should describe the problem before suggesting a feature.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and evidence
+      description: Who is blocked, frequency, workaround, browser/version, and sanitized screenshots or error text if useful.
+    validations:
+      required: true
+  - type: textarea
+    id: triage
+    attributes:
+      label: Owner triage and verification
+      description: Maintainer completes this after intake.
+      value: |
+        Owner: pending
+        Priority and reason: pending
+        Decision (fix now / next slice / defer / reject, with reason): pending
+        Related acceptance criterion or proposed spec change: pending
+        Reproduction/regression test: pending
+        Fix PR and deployed commit: pending
+        Retest evidence and reporter confirmation: pending

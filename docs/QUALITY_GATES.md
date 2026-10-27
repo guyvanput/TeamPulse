@@ -1,8 +1,9 @@
 # TeamPulse quality gates
 
-Status: implemented local commands for the first slice. The local gate has been
-executed against PostgreSQL and the standalone application. The GitHub workflow
-and Linux container build still require execution on a container-capable host.
+Status: local and GitHub acceptance checks have passed for the first slice.
+The Linux container built in CI, but its vulnerability scan failed.
+The current pilot is deployed, not yet release-accepted. See the candidate
+evidence and blockers in `docs/RELEASE_AND_FEEDBACK.md`.
 
 | Gate | Required evidence | Command / source |
 |---|---|---|
@@ -14,7 +15,10 @@ and Linux container build still require execution on a container-capable host.
 | Browser acceptance | Two-session journey and access-denial cases | `npm run test:e2e` |
 | Production build | Application compiles for deployment | `npm run build` |
 | Security checks | Secret, dependency, and container scan findings reviewed | CI scanner steps |
-| Delivery smoke | Deployed health and core journey verified | Deployment-specific check |
+| Delivery smoke | Hosted health/auth boundaries plus real OAuth and core journey | `npm run smoke:release -- <https-origin>` plus operator acceptance |
+| Recovery | Backup restored and contents/journey verified on an isolated target | Operator recovery drill |
+| Pilot acceptance | All gates evidenced and explicit owner approval | Release-readiness issue |
+| Feedback closure | Owner, decision, test/fix/deployment and retest linked | Pilot-feedback issue |
 
 `npm run gate:merge` aggregates static checks, unit/component tests,
 database integration, browser acceptance, and the production build. CI retains

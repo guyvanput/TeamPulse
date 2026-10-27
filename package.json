@@ -23,6 +23,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:local": "tsx scripts/local-postgres.ts",
     "verify:neon": "node scripts/verify-neon.mjs",
+    "smoke:release": "node scripts/release-smoke.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

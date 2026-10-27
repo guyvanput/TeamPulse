@@ -16,8 +16,10 @@ Status: local first slice implemented after Gate A and Gate B approval.
 - [x] Implement session creation, owned action capture, review, and history.
 - [x] Add browser acceptance, negative authorization, and persistence checks.
 - [x] Wire quality commands and CI configuration with PostgreSQL and scanners.
-- [ ] Execute Linux container build/scans and GitHub Actions after publication
-  is authorized. No container runtime is installed on the current machine.
+- [x] Execute Linux container build/scans and GitHub Actions after publication.
+- [ ] Resolve the failed container scan and obtain green overall CI.
+  Run 40456438638 passed acceptance, secret scanning, and the container build;
+  the container vulnerability scan failed. No local container runtime is installed.
 - [x] Document local startup, OAuth provisioning, test execution, and the
   two-session demonstration; replace inherited onboarding guidance deliberately.
 - [x] Package the standalone application and demonstrate restart persistence.
@@ -38,7 +40,7 @@ Current setup instructions are in `docs/GETTING_STARTED.md`.
 - [x] Verify the pilot-connected app: health 200, sign-in 200, GitHub provider present.
 - [x] Delete the disposable verification branch and stop the temporary app server.
 - [ ] Complete an actual interactive GitHub sign-in on the pilot.
-- [ ] Publish/deploy the Next.js application to Vercel after authorization.
+- [x] Publish/deploy the Next.js application to Vercel after authorization.
 
 Verification used database sessions only on an isolated schema-only branch, not
 on the pilot. CLI browser authorization and automatic agent detection initially
@@ -46,3 +48,18 @@ failed; the API-key profile and explicit skill-agent selection resolved those
 setup blockers. Initial publication was authorized by the user on 2026-10-27. Unrelated inherited
 documents, local credentials, installed skills, and generated artifacts are
 excluded from the initial commit.
+
+## Release and feedback closure (2026-10-27)
+
+- [x] Inspect actual GitHub CI and Vercel deployment evidence; retain failed gates.
+- [x] Add a read-only hosted smoke command and daily/manual GitHub check workflow.
+- [x] Add structured pilot-feedback and release-readiness issue forms.
+- [x] Define operator acceptance, recovery/rollback, and feedback-to-test/spec flow.
+- [x] Demonstrate isolated Neon snapshot restoration and exact recovery of six
+  business tables with synthetic data; remove all drill resources afterward.
+- [ ] Publish the new workflow/forms after explicit commit/push authorization.
+- [ ] Run the published release-evidence workflow for the deployed commit.
+- [ ] Complete interactive deployed OAuth and the synthetic hosted user journey.
+- [ ] Confirm production backup retention and verify an independent archive plus
+  the isolated-app recovery journey; snapshot-level data recovery is proven.
+- [ ] Obtain explicit human pilot acceptance after all gates pass.

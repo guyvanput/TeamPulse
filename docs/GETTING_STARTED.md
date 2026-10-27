@@ -176,3 +176,9 @@ runs as a non-root user and has no development seed endpoint.
 Before public deployment, choose a license, configure HTTPS and trusted proxy
 behavior, rotate example credentials, verify OAuth on the deployment origin,
 and demonstrate backup and restore. Never point automated tests at customer data.
+
+## Release and pilot feedback
+
+Use `docs/RELEASE_AND_FEEDBACK.md` after deployment for repeatable hosted smoke,
+CI evidence, interactive acceptance, safe recovery/rollback, and structured pilot
+feedback. Deployment success is not a substitute for these release gates.

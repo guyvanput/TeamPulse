@@ -1,6 +1,7 @@
 # Spec-driven process
 
-Idea -> Spec -> Gate A -> Design -> Gate B -> Tasks -> TDD -> PR
+Idea -> Spec -> Gate A -> Design -> Gate B -> Tasks -> TDD -> PR -> CI ->
+Deployment evidence -> Human pilot acceptance -> Feedback -> Triage -> Next spec
 
 ## Required artifacts
 
@@ -43,3 +44,11 @@ test paths and commands, but must label them as planned until implemented.
 Use the PRD as product context, not as evidence that every later design choice
 has been approved. AI prepares proposals and implementation; humans approve
 scope and design. Tests and delivery artifacts verify the resulting behavior.
+
+## Release and learning
+
+Follow `docs/RELEASE_AND_FEEDBACK.md` for release evidence, hosted smoke,
+interactive acceptance, recovery, rollback, and feedback triage. A successful
+deployment is a candidate, not acceptance. Track failed or unverified gates in
+a release-readiness issue, and link feedback to regression tests or approved
+next-slice requirements before closing the loop.

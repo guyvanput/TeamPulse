@@ -1,0 +1,73 @@
+name: Pilot release and health check
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full deployed Git commit SHA (confirm with Vercel inspect first)
+        required: true
+        type: string
+  schedule:
+    - cron: "0 7 * * *"
+permissions:
+  contents: read
+  actions: read
+  statuses: read
+concurrency:
+  group: pilot-check
+  cancel-in-progress: false
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Read-only hosted smoke
+        run: node scripts/release-smoke.mjs https://teampulse-sandy-nu.vercel.app > release-smoke.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pilot-smoke-evidence
+          path: release-smoke.json
+          retention-days: 30
+      - name: Explain scope
+        if: always()
+        run: echo "Read-only health/auth-boundary checks only. Human OAuth, two-session journey, recovery evidence, and release approval remain required. See docs/RELEASE_AND_FEEDBACK.md." >> "$GITHUB_STEP_SUMMARY"
+  release-evidence:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require CI and deployment evidence for the selected commit
+        uses: actions/github-script@v7
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        with:
+          script: |
+            const sha = process.env.RELEASE_SHA;
+            if (!/^[a-f0-9]{40}$/.test(sha)) {
+              throw new Error("release_sha must be a full lowercase Git SHA.");
+            }
+            const repo = context.repo;
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              ...repo, workflow_id: "ci.yml", head_sha: sha, event: "push", per_page: 100
+            });
+            const latest = data.workflow_runs.filter(run => run.head_branch === "main")
+              .sort((a, b) => b.run_number - a.run_number || b.run_attempt - a.run_attempt)[0];
+            if (!latest || latest.status !== "completed" || latest.conclusion !== "success") {
+              throw new Error(`TeamPulse CI must pass for this main commit, including scans. ${latest?.html_url ?? "No matching run."}`);
+            }
+            const { data: statuses } = await github.rest.repos.getCombinedStatusForRef({
+              ...repo, ref: sha, per_page: 100
+            });
+            const vercel = statuses.statuses.find(status => status.context === "Vercel");
+            if (vercel?.state !== "success") {
+              throw new Error("A successful Vercel deployment status is required for this commit.");
+            }
+            await core.summary.addHeading("Automated release evidence")
+              .addLink("CI for selected commit", latest.html_url)
+              .addRaw(`\n\nCommit: ${sha}\n\n`)
+              .addRaw("This does not approve a release or prove the production alias still points at this commit. Record Vercel inspect evidence, interactive OAuth, the two-session journey, and recovery verification in the release-readiness issue.")
+              .write();
