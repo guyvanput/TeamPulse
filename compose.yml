@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: teampulse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a database password}
+      POSTGRES_DB: teampulse
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teampulse -d teampulse"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Containerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DATABASE_URL: ${CONTAINER_DATABASE_URL:?Set the container database URL}
+      AUTH_SECRET: ${AUTH_SECRET:?Set an authentication secret}
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID:?Set the GitHub OAuth client id}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET:?Set the GitHub OAuth client secret}
+      AUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:

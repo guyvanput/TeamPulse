@@ -1,0 +1,54 @@
+name: TeamPulse CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: teampulse
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: teampulse_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U teampulse -d teampulse_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://teampulse:ci-only@localhost:5432/teampulse_test
+      TEST_DATABASE_URL: postgresql://teampulse:ci-only@localhost:5432/teampulse_test
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:migrate
+      - run: npm run gate:merge
+      - name: Dependency advisories
+        run: npm audit --audit-level=high
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-evidence
+          path: |
+            test-results
+            playwright-report
+          retention-days: 7
+  scans:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Secret scan
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.28.0 dir /repo --redact --exit-code 1
+      - name: Build container
+        run: docker build -f Containerfile -t teampulse:ci .
+      - name: Scan container
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.67.2 image --exit-code 1 --severity HIGH,CRITICAL teampulse:ci

@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.tools
+.local
+.env
+.env.*
+test-results
+playwright-report
+coverage
+docs
+spec
+design
+tasks

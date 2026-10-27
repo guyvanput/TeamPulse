@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String       @id @default(uuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  memberships   Membership[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Team {
+  id          String        @id @default(uuid())
+  name        String
+  memberships Membership[]
+  sessions    TeamSession[]
+}
+
+model Membership {
+  teamId       String
+  userId       String
+  team         Team           @relation(fields: [teamId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  ownedActions Action[]       @relation("Owner")
+  reviews      ActionReview[] @relation("Actor")
+
+  @@id([teamId, userId])
+}
+
+model TeamSession {
+  id            String         @id @default(uuid())
+  teamId        String
+  title         String
+  createdAt     DateTime       @default(now())
+  team          Team           @relation(fields: [teamId], references: [id])
+  actions       Action[]       @relation("Source")
+  reviews       ActionReview[] @relation("ReviewSession")
+
+  @@unique([teamId, id])
+  @@index([teamId, createdAt, id])
+}
+
+enum ActionStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+model Action {
+  id              String         @id @default(uuid())
+  teamId          String
+  sourceSessionId String
+  title           String
+  context         String         @default("")
+  ownerId         String
+  dueDate         DateTime?      @db.Date
+  status          ActionStatus   @default(OPEN)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sourceSession   TeamSession    @relation("Source", fields: [teamId, sourceSessionId], references: [teamId, id])
+  owner           Membership     @relation("Owner", fields: [teamId, ownerId], references: [teamId, userId])
+  reviews         ActionReview[]
+
+  @@unique([teamId, id])
+  @@index([teamId, status])
+}
+
+model ActionReview {
+  id              String       @id @default(uuid())
+  teamId          String
+  actionId        String
+  reviewSessionId String
+  actorId         String
+  note            String
+  resultingStatus ActionStatus
+  createdAt       DateTime     @default(now())
+  action          Action       @relation(fields: [teamId, actionId], references: [teamId, id])
+  reviewSession   TeamSession  @relation("ReviewSession", fields: [teamId, reviewSessionId], references: [teamId, id])
+  actor           Membership   @relation("Actor", fields: [teamId, actorId], references: [teamId, userId])
+
+  @@unique([actionId, reviewSessionId])
+}

@@ -1,0 +1,25 @@
+node_modules/
+.next/
+.tools/
+.env*
+!.env.example
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+*.log
+.local/
+.neon
+.agents/
+skills-lock.json
+
+# Unrelated inherited documents kept locally, never published with TeamPulse.
+docs/OFFICE_DAY_CHECKLIST.md
+docs/OFFICE_RUNBOOK.md
+docs/REVIEW_GUIDE.md
+docs/TEAM_ONBOARDING.md
+docs/TUTORIAL_FIRST_SCENARIO.md
+docs/USER_MANUAL_MAINTAINERS.md
+docs/USER_MANUAL_MANUAL_TESTERS.md
+docs/XRAY_WORKBOOK_ANALYSIS.md
+docs/defects/
