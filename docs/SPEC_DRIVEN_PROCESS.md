@@ -45,6 +45,27 @@ Use the PRD as product context, not as evidence that every later design choice
 has been approved. AI prepares proposals and implementation; humans approve
 scope and design. Tests and delivery artifacts verify the resulting behavior.
 
+## AI-assisted demonstration, not vibe coding
+
+The purpose is to show AI doing traceable engineering work inside an approved
+specification and design, with an executable test harness deciding whether the
+result meets the agreed behavior. AI is not an in-product feature in this slice.
+
+| Stage | AI contribution | Required boundary/evidence |
+|---|---|---|
+| Feedback and requirements | Analyze observed feedback on demand, identify defects versus new scope, draft testable criteria | Human approves Gate A; no inferred requirements |
+| Design | Propose the smallest design and explain alternatives/risks | Human approves Gate B before production behavior changes |
+| Implementation | Write focused tests and code against approved criteria | Trace changes to the specification; preserve team/auth boundaries |
+| Verification | Run the harness, investigate failures, and use approved BugMagnet phases for additional test ideas | `npm run gate:merge`, strict CI scans, archive/recovered-app checks, and hosted evidence |
+| Delivery and learning | Prepare candidate evidence and feedback decisions | Human explicitly accepts the pilot; AI cannot waive failed gates or approve its own changed scope |
+
+Feedback triage is AI-assisted and operator-invoked for the demonstration, not
+a promise that the operator manually analyzes every report or that an autonomous
+agent is already scheduled. AI prepares a decision with specification links,
+reproduction, a regression test or proposed next-slice criteria, and actual
+evidence. The human remains accountable for approval and prioritization.
+Do not treat AI-generated explanations or a green build alone as proof.
+
 ## Release and learning
 
 Follow `docs/RELEASE_AND_FEEDBACK.md` for release evidence, hosted smoke,
