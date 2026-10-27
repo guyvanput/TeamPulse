@@ -32,6 +32,12 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run db:migrate
       - run: npm run gate:merge
+      - name: Install PostgreSQL archive tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-17
+      - name: Verify independent archive and recovered application
+        env:
+          PG_BIN: /usr/lib/postgresql/17/bin
+        run: npm run verify:recovery
       - name: Dependency advisories
         run: npm audit --audit-level=high
       - uses: actions/upload-artifact@v4
@@ -41,6 +47,7 @@ jobs:
           path: |
             test-results
             playwright-report
+            .local/recovery/*/evidence.json
           retention-days: 7
   scans:
     runs-on: ubuntu-latest
@@ -50,5 +57,15 @@ jobs:
         run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.28.0 dir /repo --redact --exit-code 1
       - name: Build container
         run: docker build -f Containerfile -t teampulse:ci .
+      - name: Verify container startup and non-root runtime
+        run: |
+          test "$(docker image inspect teampulse:ci --format '{{.Config.User}}')" = "65532:65532"
+          docker run --detach --name teampulse-smoke -p 127.0.0.1:3200:3000 \
+            -e DATABASE_URL=postgresql://unused:unused@127.0.0.1:5432/unused \
+            -e AUTH_SECRET=ci-container-startup-only \
+            -e AUTH_TRUST_HOST=true teampulse:ci
+          trap 'docker logs teampulse-smoke; docker rm -f teampulse-smoke' EXIT
+          curl --retry 20 --retry-connrefused --retry-delay 1 --fail \
+            http://127.0.0.1:3200/signin | grep -q 'Sign in with GitHub'
       - name: Scan container
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.67.2 image --exit-code 1 --severity HIGH,CRITICAL teampulse:ci
