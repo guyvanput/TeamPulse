@@ -41,9 +41,11 @@ The personal pilot's PostgreSQL is now hosted on Neon. Its ignored `.env` uses a
 pooled runtime URL and direct migration URL. Cloud-backed browser and integration
 verification passed on a separate disposable branch; the temporary branch was
 deleted afterward. The [personal pilot](https://teampulse-sandy-nu.vercel.app)
-is deployed on Vercel and its read-only hosted smoke passed. Interactive
-GitHub sign-in, the hosted core journey, scan remediation, and backup/restore
-remain release-acceptance requirements.
+is deployed on Vercel. Real GitHub admission/denial, the hosted action journey,
+sign-out, Neon snapshot recovery, and an independent archive/recovered-app drill
+have evidence recorded in the release runbook. The operator approved seven-day
+encrypted local backups in addition to the current six-hour Neon restore window.
+Container scan remediation and explicit owner acceptance remain release gates.
 
 Run `npm run smoke:release -- https://teampulse-sandy-nu.vercel.app` for read-only
 health and signed-out boundary checks. The release/health workflow and issue forms

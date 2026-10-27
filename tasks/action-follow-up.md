@@ -11,7 +11,7 @@ Status: local first slice implemented after Gate A and Gate B approval.
   environment template, and static checks.
 - [x] Add PostgreSQL container configuration, Prisma migrations, and demo seed.
 - [x] Implement Auth.js/GitHub OAuth and server-side team authorization.
-- [ ] Configure real OAuth credentials and verify an operator-provisioned login.
+- [x] Configure real OAuth credentials and verify an operator-provisioned login.
 - [x] Add rule, component, and integration tests mapped to acceptance criteria.
 - [x] Implement session creation, owned action capture, review, and history.
 - [x] Add browser acceptance, negative authorization, and persistence checks.
@@ -23,7 +23,8 @@ Status: local first slice implemented after Gate A and Gate B approval.
 - [x] Document local startup, OAuth provisioning, test execution, and the
   two-session demonstration; replace inherited onboarding guidance deliberately.
 - [x] Package the standalone application and demonstrate restart persistence.
-- [ ] Demonstrate backup and restore before public deployment.
+- [x] Demonstrate backup and restore; see the independent archive/recovered-app
+  drill and approved encrypted pilot backup policy in the release runbook.
 
 No task completion above implies a server is left running or a commit was pushed.
 Current setup instructions are in `docs/GETTING_STARTED.md`.
@@ -39,7 +40,7 @@ Current setup instructions are in `docs/GETTING_STARTED.md`.
   and 6 browser tests against a separate Neon verification database.
 - [x] Verify the pilot-connected app: health 200, sign-in 200, GitHub provider present.
 - [x] Delete the disposable verification branch and stop the temporary app server.
-- [ ] Complete an actual interactive GitHub sign-in on the pilot.
+- [x] Complete an actual interactive GitHub sign-in on the pilot.
 - [x] Publish/deploy the Next.js application to Vercel after authorization.
 
 Verification used database sessions only on an isolated schema-only branch, not
@@ -50,6 +51,12 @@ documents, local credentials, installed skills, and generated artifacts are
 excluded from the initial commit.
 
 ## Release and feedback closure (2026-10-27)
+
+Container remediation (user-approved packaging change, 2026-10-27): build on
+Node 24 Debian 13, ship the standalone app on the maintained non-root Node 24
+distroless Debian 13 runtime, and verify startup in CI before the unchanged
+strict container scan. The application behavior, auth, database driver, and
+Vercel runtime stay unchanged; no scanner exclusion or severity waiver is added.
 
 - [x] Inspect actual GitHub CI and Vercel deployment evidence; retain failed gates.
 - [x] Add a read-only hosted smoke command and daily/manual GitHub check workflow.
@@ -63,7 +70,12 @@ excluded from the initial commit.
   Run 40460270090 passed hosted smoke and correctly blocked the original
   candidate's failed CI. CI run 40460255789 also passed acceptance for `140442c`
   but retained the container scan failure.
-- [ ] Complete interactive deployed OAuth and the synthetic hosted user journey.
-- [ ] Confirm production backup retention and verify an independent archive plus
-  the isolated-app recovery journey; snapshot-level data recovery is proven.
+- [x] Complete interactive deployed OAuth and the synthetic hosted user journey.
+- [x] Verify sign-out and direct action URL denial; record user-performed
+  unprovisioned OAuth denial with screenshot corroboration.
+- [x] Run BugMagnet's approved core/advanced auth callback phases: 16 passing
+  tests, none skipped, no discovered bugs; no production auth change.
+- [x] Confirm production backup retention and verify an independent archive plus
+  the isolated-app recovery journey. Six-hour Neon restore window plus user-approved
+  operator-run seven-day encrypted archives; the first pilot archive verified.
 - [ ] Obtain explicit human pilot acceptance after all gates pass.

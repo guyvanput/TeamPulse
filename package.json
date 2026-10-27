@@ -24,6 +24,8 @@
     "db:local": "tsx scripts/local-postgres.ts",
     "verify:neon": "node scripts/verify-neon.mjs",
     "smoke:release": "node scripts/release-smoke.mjs",
+    "verify:recovery": "tsx scripts/verify-recovery.ts",
+    "backup:pilot": "tsx scripts/backup-pilot.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

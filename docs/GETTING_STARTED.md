@@ -117,6 +117,13 @@ The production build is also used by browser tests. `npm.cmd run build` packages
 the standalone runtime and static assets; `npm.cmd start` serves it on loopback.
 Browser test ports 3100 and 3101 must be free.
 
+For an independent archive/recovered-app drill, install PostgreSQL 17
+`pg_dump`/`pg_restore`, set `PG_BIN` to their directory, and run
+`npm.cmd run verify:recovery` after building. Keep the local test database server
+running and port 3102 free. This command refuses remote databases, uses only
+randomly named local `_test` databases and synthetic records, and removes its
+databases/app process afterward. See the release runbook for measured evidence.
+
 ## Neon personal pilot
 
 The project is linked through the ignored `.neon` context. Postgres is the only
@@ -163,6 +170,11 @@ CLI API keys as application secrets. Do not copy `.env` to source control.
 
 ## Containers
 
+The final image uses the non-root Node 24 Debian 13 distroless runtime; it has
+no shell, npm, or package manager. Build tooling stays in the build stage.
+Use application health endpoints and host-side logs for operation rather than
+assuming an interactive shell exists inside the container.
+
 After applying migrations and seeding with host-side tools:
 
 ```powershell
@@ -182,3 +194,13 @@ and demonstrate backup and restore. Never point automated tests at customer data
 Use `docs/RELEASE_AND_FEEDBACK.md` after deployment for repeatable hosted smoke,
 CI evidence, interactive acceptance, safe recovery/rollback, and structured pilot
 feedback. Deployment success is not a substitute for these release gates.
+
+The approved personal-pilot backup policy is operator-run: use
+`npm.cmd run backup:pilot` before releases and on each day of pilot use, retaining
+encrypted archives for seven days alongside Neon's current six-hour restore
+window. This Windows-only command requires PostgreSQL 17 tools, the private direct
+`DATABASE_URL_UNPOOLED`, and an explicit `PILOT_BACKUP_HOST`. It verifies TLS and
+encrypts archives for the current Windows user before writing to `.local/backups`.
+Keep Windows profile recovery available; this is not off-site disaster recovery.
+Never commit/upload backup files. Full instructions and limitations are in the
+release runbook.
