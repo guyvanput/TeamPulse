@@ -308,11 +308,14 @@ for defects, usability friction, and ideas; use
 to track a candidate's evidence and sign-off. Templates become available after
 the files are published to the default branch.
 
-The operator reviews feedback after each pilot session and before selecting the
-next slice. Every item gets an owner, impact/priority, and a reasoned decision:
-fix now, next slice, defer, or reject. Release-blocking defects are handled before
-new features. Security-sensitive details must go privately to the owner rather
-than into public issues.
+For the demonstration, ask AI to analyze selected feedback against the approved
+specification and test harness. Every item gets a proposed owner, impact/priority,
+and a reasoned decision: fix now, next slice, defer, or reject. The human approves
+prioritization and changed scope before the next delivery; AI supplies the
+reproduction, traceability, and verification evidence. No recurring manual
+review cadence or scheduled AI triage is assumed. Release-blocking defects are
+handled before new features. Security-sensitive details must go privately to the
+owner rather than into public issues.
 
 For an approved fix, link the acceptance criterion, minimal reproduction,
 regression test, fix PR, and deployed commit. Changed behavior requires spec
