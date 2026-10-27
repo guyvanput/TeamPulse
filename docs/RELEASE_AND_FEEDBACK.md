@@ -29,6 +29,23 @@ Live gate decisions and operator evidence are tracked in
 This table describes the published candidate, not any subsequent uncommitted
 changes. Update it or a release-readiness issue when a new candidate is deployed.
 
+### Release-loop publication evidence
+
+The owner authorized commit/push of the release-loop changes and BugMagnet skill.
+Commit `140442ca2d1d6d08b4eb13738f3581dab4faeef6` published the workflow and
+issue forms. The workflow is active. Its
+[first execution](https://github.com/guyvanput/TeamPulse/actions/runs/40460270090)
+passed hosted smoke and correctly refused release evidence for the original
+candidate because its CI failed.
+
+For `140442c`,
+[CI run 40460255789](https://github.com/guyvanput/TeamPulse/actions/runs/40460255789)
+passed acceptance and again failed the container scan with the same reported
+counts. Vercel deployment `dpl_A7Nx3Lin83wpqTS9yY3rmTbuweQc` was Ready on the
+production alias, and the Vercel status on `140442c` linked that same deployment.
+The deployment has advanced, but release acceptance remains **blocked**.
+The readiness issue holds later candidate updates and human decisions.
+
 ## Repeatable automated evidence
 
 From the project root:

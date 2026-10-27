@@ -57,8 +57,12 @@ excluded from the initial commit.
 - [x] Define operator acceptance, recovery/rollback, and feedback-to-test/spec flow.
 - [x] Demonstrate isolated Neon snapshot restoration and exact recovery of six
   business tables with synthetic data; remove all drill resources afterward.
-- [ ] Publish the new workflow/forms after explicit commit/push authorization.
-- [ ] Run the published release-evidence workflow for the deployed commit.
+- [x] Publish the new workflow/forms after explicit commit/push authorization.
+  Published in `140442c`; the workflow is active and both issue forms are present.
+- [x] Run the published release-evidence workflow for the deployed commit.
+  Run 40460270090 passed hosted smoke and correctly blocked the original
+  candidate's failed CI. CI run 40460255789 also passed acceptance for `140442c`
+  but retained the container scan failure.
 - [ ] Complete interactive deployed OAuth and the synthetic hosted user journey.
 - [ ] Confirm production backup retention and verify an independent archive plus
   the isolated-app recovery journey; snapshot-level data recovery is proven.
