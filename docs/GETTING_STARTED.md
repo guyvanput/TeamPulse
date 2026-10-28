@@ -189,6 +189,11 @@ pilot database for test fixtures. Delete the disposable branch after verificatio
 
 To host the website on Vercel, publish the code only when authorized, select the
 Next.js preset, and configure database and OAuth secrets privately in Vercel.
+`vercel.json` pins functions to Frankfurt (`fra1`), alongside the existing
+`aws-eu-central-1` database. Verify the deployed function region and actual
+authenticated snapshot latency; the default Washington placement exceeded the
+two-second polling timeout during hosted verification. Do not mask deployment
+latency by relaxing the approved timeout or caching authenticated snapshots.
 Set the deployed HTTPS origin and matching GitHub callback; use a separate OAuth
 application for a separate origin. Never import local `TEST_DATABASE_URL` or Neon
 CLI API keys as application secrets. Do not copy `.env` to source control.

@@ -167,3 +167,26 @@ comparisons, legacy defaults and empty-new-table checks passed in production.
 The still-deployed first-slice application passed its read-only hosted smoke
 after migration. Source publication, new Linux CI/deployment, real hosted
 multi-user evidence and explicit candidate acceptance remain subsequent gates.
+
+## Hosted latency blocker and authorized remediation (2026-10-28)
+
+Candidate `de911b3` passed Linux CI: 86 unit/component, 54 integration and 16 browser
+tests, independent recovered-app drill, dependency advisories, secret scan,
+nonroot container startup and strict HIGH/CRITICAL scan. The production alias
+matched Ready Vercel deployment `dpl_9LNFNAXUJtaZiinpDujG9cSqPe12`. The deployed-source
+release check and read-only hosted smoke also passed. Evidence is tracked in
+[readiness issue #2](https://github.com/guyvanput/TeamPulse/issues/2).
+
+Real OAuth succeeded and legacy history remained visible. A new synthetic
+facilitated session was created, but its snapshot requests took 3225, 2678 and
+2652 milliseconds. All returned HTTP 200; all exceeded the approved 2000 ms
+client timeout, correctly marking updates unavailable and disabling writes.
+This is a release blocker, not a successful facilitated hosted journey.
+
+Deployment inspection confirmed functions in Washington (`iad1`), while the
+existing database is in Frankfurt (`aws-eu-central-1`). The owner separately
+approved pinning Vercel functions to Frankfurt (`fra1`), committing/pushing that
+deployment-only fix and rerunning CI/hosted measurements. `vercel.json` records
+that placement. No timeout, caching, authorization or shared-update requirement
+is relaxed. Verify actual placement and latency after redeployment before
+claiming the blocker resolved.
