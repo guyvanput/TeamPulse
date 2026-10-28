@@ -140,7 +140,10 @@ async function stopApp(child: ChildProcess) {
   if (child.exitCode !== null) return;
   const exited = once(child, "exit");
   child.kill();
+  // A graceful shutdown waits for the browser's open keep-alive polling connections.
+  const forced = setTimeout(() => child.kill("SIGKILL"), 5_000);
   await exited;
+  clearTimeout(forced);
 }
 
 test("TC11: facilitated state, roster, active and removed topics survive process restart", async ({ page, context }) => {
