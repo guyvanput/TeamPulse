@@ -10,13 +10,14 @@ function Feedback({ state }: { state: FormState }) {
   </div>;
 }
 
-export function SessionForm({ teamId }: { teamId: string }) {
+export function SessionForm({ teamId, facilitated = false }: { teamId: string; facilitated?: boolean }) {
   const [state, action, pending] = useActionState(addSession, {});
   return <form action={action}>
     <input type="hidden" name="teamId" value={teamId} />
-    <label>Session name<input name="title" required maxLength={160} placeholder="Weekly improvement conversation" /></label>
+    <input type="hidden" name="kind" value={facilitated ? "FACILITATED" : "ACTION_FOLLOW_UP"} />
+    <label>{facilitated ? "Facilitated conversation title" : "Session name"}<input name="title" required maxLength={160} placeholder="Weekly improvement conversation" /></label>
     <Feedback state={state} />
-    <button disabled={pending}>{pending ? "Creating..." : "Create session"}</button>
+    <button disabled={pending}>{pending ? "Creating..." : facilitated ? "Create facilitated session" : "Create session"}</button>
   </form>;
 }
 

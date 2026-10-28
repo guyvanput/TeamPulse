@@ -12,11 +12,13 @@ export default async function Home() {
     {!teams.length && <div className="card"><h2>No team access yet</h2><p>Ask the demonstration operator to provision your GitHub account.</p></div>}
     {teams.map((team) => <section className="card" key={team.id}>
       <h2>{team.name}</h2><div className="columns">
-        <div><h3>Start a conversation</h3><SessionForm teamId={team.id} /></div>
+        <div><h3>Start a conversation</h3><SessionForm teamId={team.id} />
+          <h3>Collect discussion topics</h3><SessionForm teamId={team.id} facilitated />
+        </div>
         <div><h3>Session history</h3>
           {team.sessions.length ? <ul className="session-list">{team.sessions.map((session) =>
             <li key={session.id}><Link href={`/sessions/${session.id}`}>{session.title}</Link>
-              <small>{session.createdAt.toISOString().slice(0, 10)}</small></li>)}</ul> : <p>No sessions yet. Start your first one.</p>}
+              <small>{session.createdAt.toISOString().slice(0, 10)} / {session.kind === "FACILITATED" ? "Facilitated session" : "Action follow-up session"}</small></li>)}</ul> : <p>No sessions yet. Start your first one.</p>}
         </div>
       </div>
     </section>)}

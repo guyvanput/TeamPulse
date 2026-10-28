@@ -27,6 +27,8 @@ export async function cleanFixture(db: ReturnType<typeof testDatabase>, data: Aw
   const teamId = { in: [data.alpha.id, data.beta.id] };
   await db.actionReview.deleteMany({ where: { teamId } });
   await db.action.deleteMany({ where: { teamId } });
+  await db.topic.deleteMany({ where: { teamId } });
+  await db.sessionParticipant.deleteMany({ where: { teamId } });
   await db.teamSession.deleteMany({ where: { teamId } });
   await db.membership.deleteMany({ where: { teamId } });
   await db.team.deleteMany({ where: { id: teamId } });

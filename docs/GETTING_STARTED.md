@@ -85,6 +85,31 @@ Open `http://localhost:3000` and sign in. An unprovisioned account is denied.
 No in-product AI service is needed. Use the linked requirements, design, code,
 and test evidence to explain where AI helped and where humans approved.
 
+## Facilitated topic collection (second slice)
+
+The local second-slice implementation requires the additive facilitated-topics
+migration. Existing sessions remain action-follow-up sessions; no facilitator
+is invented and no existing action/review is converted.
+
+1. Use "Collect discussion topics" to create a facilitated session. Its creator
+   is the facilitator and first participant.
+2. Other provisioned same-team members open its URL and select "Join session".
+   They can read before joining, but must join before contributing.
+3. Submit topics. Authors can edit/remove their own topics; the facilitator can
+   manage all topics. Confirmed removals remain in session history.
+4. The facilitator pauses/resumes collection or permanently closes the session.
+   Closed sessions are read-only; unresolved actions remain reviewable later.
+5. On visible online pages, saved changes are refreshed automatically. Offline
+   or failed updates are explicitly marked stale and disable writes until retry
+   succeeds. Unsaved drafts survive shared updates, not page reloads or loss of
+   authorization.
+
+This is not yet voting, timers, parking lots, or summaries. The five-second shared
+update target is for normal small-team connectivity, not an availability SLA.
+Do not roll back to the first-slice binary while facilitated sessions are writable:
+it does not enforce the new lifecycle rules. Production migration and publication
+remain separate operator decisions; see `design/facilitated-topic-collection.md`.
+
 ## Automated checks
 
 Create a separate local database named `teampulse_test` and configure

@@ -4,6 +4,8 @@ import { requireActor } from "@/lib/actor";
 import { sessionDetails, UserError } from "@/lib/service";
 import { statusLabels } from "@/lib/rules";
 import { ActionForm, ReviewForm } from "@/components/forms";
+import { SessionWorkspace } from "@/components/session-workspace";
+import { sessionSnapshot } from "@/lib/snapshot-service";
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const actor = await requireActor();
@@ -12,8 +14,9 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     if (error instanceof UserError && error.kind === "denied") notFound();
     throw error;
   });
+  if (data.session.kind === "FACILITATED") return <SessionWorkspace initial={await sessionSnapshot(actor, id)} />;
   return <>
-    <Link href="/">Back to workspace</Link><p className="eyebrow">TEAM SESSION</p>
+    <Link href="/">Back to workspace</Link><p className="eyebrow">ACTION FOLLOW-UP SESSION</p>
     <h1>{data.session.title}</h1>
     <p className="intro">First, revisit your commitments. Then capture what comes next.</p>
     <section className="card"><h2>Previous commitments</h2>

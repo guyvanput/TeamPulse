@@ -93,6 +93,15 @@ try {
     teamId: team.id, actionId: action.id, reviewSessionId: later.id, actorId: user.id,
     note: "Original synthetic progress note", resultingStatus: "IN_PROGRESS"
   } });
+  const facilitated = await source.teamSession.create({ data: {
+    teamId: team.id, title: "Recovered topic collection", kind: "FACILITATED",
+    facilitatorId: user.id, collectionState: "COLLECTING",
+    participants: { create: { userId: user.id } }
+  } });
+  await source.topic.createMany({ data: [
+    { teamId: team.id, sessionId: facilitated.id, authorId: user.id, title: "Restored active topic", description: "Preserve topic context" },
+    { teamId: team.id, sessionId: facilitated.id, authorId: user.id, title: "Restored removed topic", removedAt: new Date(), removedById: user.id, version: 1 }
+  ] });
   const expected = await contents(sourceUrl);
   const binary = (name: string) => process.env.PG_BIN
     ? join(process.env.PG_BIN, process.platform === "win32" ? `${name}.exe` : name)
@@ -145,10 +154,12 @@ try {
   await expect(page.getByText(action.context)).toBeVisible();
   await expect(page.getByText("Original synthetic progress note")).toBeVisible();
   await expect(page.getByText("Due: 2026-11-01")).toBeVisible();
-  await page.goto("http://127.0.0.1:3102/");
-  await page.getByRole("textbox", { name: "Session name" }).fill("Post-restore continuation");
-  await page.getByRole("button", { name: "Create session" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Post-restore continuation" })).toBeVisible();
+  await page.goto(`http://127.0.0.1:3102/sessions/${facilitated.id}`);
+  await expect(page.getByRole("heading", { name: "Restored active topic", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Restored removed topic", exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "Topic title", exact: true }).fill("Continued after restore");
+  await page.getByRole("button", { name: "Submit topic" }).click();
+  await expect(page.getByRole("heading", { name: "Continued after restore" })).toBeVisible();
   await expect(page.getByRole("link", { name: action.title })).toBeVisible();
   await page.getByRole("textbox", { name: "Progress note" }).fill("Completed after independent archive recovery");
   await page.getByRole("combobox", { name: "Resulting status" }).selectOption("DONE");
@@ -165,7 +176,7 @@ try {
     result: "passed", startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
     archiveSha256: checksum, archiveContains: "synthetic records only; no auth sessions or provider tokens",
     source: names[0], target: names[1], tables: Object.keys(expected),
-    restoreSeconds, applicationContinuation: "In progress -> Done; both notes survived reload",
+    restoreSeconds, applicationContinuation: "Facilitated roster/topics/removal history restored; new topic saved; In progress -> Done; both notes survived reload",
     productionAccess: false,
     retention: "Local synthetic drill archive only; not a production backup policy."
   };

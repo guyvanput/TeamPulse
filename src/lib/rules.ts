@@ -11,6 +11,21 @@ const date = z.string().refine((value) => {
 }, "Enter a valid calendar date (YYYY-MM-DD).");
 
 export const sessionInput = z.object({ teamId: id, title });
+export const collectionState = z.enum(["COLLECTING", "PAUSED", "CLOSED"]);
+export type CollectionState = z.infer<typeof collectionState>;
+const version = z.union([z.number(), z.string().trim().min(1)])
+  .pipe(z.coerce.number<string | number>().int().nonnegative());
+export const joinInput = z.object({ sessionId: id });
+export const topicInput = joinInput.extend({
+  title: title.refine(value => value.length <= 160, "Use at most 160 characters."),
+  description: z.string().trim().refine(value => value.length <= 4000, "Use at most 4000 characters.")
+});
+export const topicChangeInput = topicInput.extend({ topicId: id, version });
+export const topicRemoveInput = joinInput.extend({ topicId: id, version });
+export const lifecycleInput = joinInput.extend({ state: collectionState, version });
+export function canTransitionCollection(from: CollectionState, to: CollectionState) {
+  return from !== "CLOSED" && from !== to;
+}
 export const actionInput = z.object({
   sessionId: id,
   title,

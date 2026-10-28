@@ -3,10 +3,10 @@
 | Property | Value |
 |-----------|---------|
 | Product | TeamPulse |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Draft |
 | Author | Guy Van Put |
-| Date | 2026-10-26 |
+| Date | 2026-10-27 |
 | Type | Open-source reference application for an AI-assisted SDLC demonstration |
 
 ---
@@ -130,33 +130,95 @@ Needs:
 
 ---
 
-# 6. Scope
+# 6. Users and Roles
 
-## MVP In Scope
+## Facilitator
 
-### Lean Coffee Module
+Responsibilities:
 
-- Session management
-- Topic management
-- Voting
-- Discussion timer
-- Parking lot
-- Session summary
+- Create sessions
+- Start and stop voting
+- Start and stop timers
+- Move topics to the parking lot
+- Reorder the agenda
+- Create summaries
+- Close sessions
+- Manage participants
 
-### Action Tracker
+Permissions: full control of a session.
 
-- Action registration
-- Owner assignment
-- Due dates
-- Status tracking
+## Participant
 
-### Agile Coach (future increment)
+Responsibilities:
 
-- Story analysis
-- Ready score
-- Improvement suggestions
-- Test ideas
-- Risk identification
+- Join sessions
+- Submit discussion topics
+- Vote on topics
+- Participate in discussions
+- View outcomes and actions
+
+Permissions: contribute but not administer.
+
+These are session-level product roles. Their assignment, participant-management
+rules, and exact operation permissions must be specified and approved before
+implementation. They do not replace the existing server-side team-membership
+boundary or imply unrestricted access to other teams' sessions.
+
+---
+
+# 7. Scope and Release Boundaries
+
+## MVP (Release 1)
+
+The MVP must enable teams to run a complete Lean Coffee session digitally.
+
+### Included
+
+- Create and manage Lean Coffee sessions
+- Add discussion topics
+- Vote on topics
+- Automatic prioritization based on votes
+- Session timer management
+- Parking lot for deferred topics
+- Meeting summary generation
+- Action item capture, including ownership, optional due dates, status tracking,
+  and later-session follow-up from the accepted first slice
+- Basic role management
+- Session history
+
+### Explicitly Excluded
+
+- AI coaching
+- AI-generated facilitation recommendations
+- Team health analytics
+- Trend analysis across multiple sessions
+- Meeting sentiment analysis
+- Jira/Azure DevOps synchronization
+- Enterprise reporting dashboards
+
+Meeting summary generation is an MVP capability, not approval for AI-generated
+summaries. Summary contents and generation behavior must be defined in the
+applicable specification and design.
+
+## Post-MVP (Release 2+)
+
+Potential future capabilities, not committed Release 1 deliverables:
+
+- AI Agile Coach
+- Retrospective insights
+- Recommendation engine
+- Team participation analytics
+- Meeting quality scoring
+- Organization-wide reporting
+- Predictive coaching and guidance
+
+Potential AI Agile Coach functions include story analysis, readiness assessment,
+improvement suggestions, test ideas, and risk identification. These remain
+outside the MVP and require separate scope, specification, and design approval.
+
+The owner supplied these release boundaries and session roles on 2026-10-27.
+This PRD records product direction, not detailed behavioral or technical approval
+for the remaining Lean Coffee capabilities.
 
 ---
 
@@ -176,9 +238,23 @@ The design is in [the first-slice design](../design/action-follow-up.md).
 The user approved the specification and design on 2026-10-26 before application
 implementation.
 
-Full Lean Coffee voting, timers, parking lots, and in-product AI coaching are
-deferred until the first slice is demonstrated. AI assistance in development
-does not require AI features in the application.
+The owner accepted the first-slice personal pilot on 2026-10-27; it is the
+baseline for the remaining MVP work, not completion of Release 1. Full Lean
+Coffee topic management, voting, timers, parking lots, summaries, and session
+roles remain to be specified and delivered. In-product AI coaching remains
+post-MVP. AI assistance in development does not require AI features in the
+application.
+
+## Second Delivery Slice
+
+Create a facilitated session, explicitly join as a same-team participant, and
+collect discussion topics with shared updates and facilitator-controlled
+collection/closure. The proposed rules and acceptance criteria are in
+[the second-slice specification](../spec/facilitated-topic-collection.md).
+The owner approved the complete specification (Gate A) on 2026-10-27.
+The owner approved the technical design (Gate B) on 2026-10-27; see
+[the second-slice design](../design/facilitated-topic-collection.md).
+Voting, timers, parking lots, and summaries remain subsequent Release 1 work.
 
 ## Demonstration Success Criteria
 

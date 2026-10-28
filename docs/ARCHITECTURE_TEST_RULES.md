@@ -4,6 +4,17 @@ Status: first-slice rules, aligned with the approved design. Type checks, lint,
 and behavior tests provide evidence, but are not a complete automated architecture
 audit. See `design/action-follow-up.md`.
 
+The approved second-slice design is in
+`design/facilitated-topic-collection.md`. Facilitated session mutations lock the
+session and recheck current membership/participation/state inside the write
+transaction. Topic/lifecycle versions detect stale commands. Accept only numbers
+or nonblank numeric strings as expected versions, not coerced nulls, booleans or
+arrays. Compare loaded topic versions before building database integer filters;
+oversized stale versions must return a conflict rather than a database error.
+Keep the conditional write-version guard. Shared snapshots
+are authenticated, uncached, validated DTOs; polling must not reset drafts or
+preserve protected content after access loss. Legacy session behavior remains.
+
 - Keep business validation and action transition rules independent of React,
   Next.js, Prisma, and authentication providers.
 - Keep database access and authentication integration in server-only modules.

@@ -143,6 +143,33 @@ async function stopApp(child: ChildProcess) {
   await exited;
 }
 
+test("TC11: facilitated state, roster, active and removed topics survive process restart", async ({ page, context }) => {
+  test.setTimeout(90_000);
+  await login(context, data.alice.id);
+  const session = await db.teamSession.create({ data: {
+    teamId: data.alpha.id, title: "Persistent facilitated session", kind: "FACILITATED",
+    facilitatorId: data.alice.id, collectionState: "PAUSED",
+    participants: { create: { userId: data.alice.id } }
+  } });
+  await db.topic.createMany({ data: [
+    { teamId: data.alpha.id, sessionId: session.id, authorId: data.alice.id, title: "Persistent topic", description: "Persistent context" },
+    { teamId: data.alpha.id, sessionId: session.id, authorId: data.alice.id, title: "Removed topic", removedAt: new Date(), removedById: data.alice.id }
+  ] });
+  let server = await startApp(3101);
+  try {
+    await page.goto(`http://127.0.0.1:3101/sessions/${session.id}`);
+    await expect(page.getByRole("heading", { name: "Persistent topic", exact: true })).toBeVisible();
+    await stopApp(server);
+    server = await startApp(3101);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Persistent topic", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Removed topic", exact: true })).toBeVisible();
+    await expect(page.getByText("Collection: Collection paused", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Resume collection" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Join session" })).toHaveCount(0);
+  } finally { await stopApp(server); }
+});
+
 test("AC8: database action and review survive an actual application process restart", async ({ page, context }) => {
   test.setTimeout(90_000);
   await login(context, data.alice.id);

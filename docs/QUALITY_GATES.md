@@ -1,9 +1,12 @@
 # TeamPulse quality gates
 
-Status: local and GitHub acceptance checks have passed for the first slice.
-The Linux container built in CI, but its vulnerability scan failed.
-The current pilot is deployed, not yet release-accepted. See the candidate
-evidence and blockers in `docs/RELEASE_AND_FEEDBACK.md`.
+Status: the first slice was accepted on 2026-10-27 after passing CI, strict scans,
+hosted checks and recovery; its final evidence is in
+[readiness issue #1](https://github.com/guyvanput/TeamPulse/issues/1).
+Facilitated topic collection is a separate release candidate. Its approved
+specification/design, local execution and rollout evidence are in
+`tasks/facilitated-topic-collection.md`; publication/deployment does not waive
+its remaining hosted checks or explicit candidate acceptance.
 
 | Gate | Required evidence | Command / source |
 |---|---|---|

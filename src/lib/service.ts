@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "./db";
-import { actionInput, isEarlier, reviewInput, sessionInput } from "./rules";
+import { actionInput, isEarlier, reviewInput, sessionInput, joinInput, topicInput, topicChangeInput, topicRemoveInput, lifecycleInput, canTransitionCollection } from "./rules";
 
 export class UserError extends Error {
   constructor(message: string, public readonly kind: "validation" | "denied" | "conflict" = "validation") {
@@ -16,17 +16,34 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return result.data;
 }
 
-async function member(actorId: string, teamId: string) {
-  if (!actorId || !await db.membership.findUnique({ where: { teamId_userId: { teamId, userId: actorId } } })) {
+async function member(actorId: string, teamId: string, tx: Prisma.TransactionClient) {
+  const rows = actorId ? await tx.$queryRaw<{ userId: string }[]>`
+    SELECT "userId" FROM "Membership" WHERE "teamId" = ${teamId} AND "userId" = ${actorId} FOR SHARE
+  ` : [];
+  if (!rows.length) {
     throw new UserError("You do not have access to this team.", "denied");
   }
 }
 
-async function authorizedSession(actorId: string, sessionId: string) {
-  const session = await db.teamSession.findFirst({
+async function authorizedSession(actorId: string, sessionId: string, tx: Prisma.TransactionClient = db) {
+  const session = await tx.teamSession.findFirst({
     where: { id: sessionId, team: { memberships: { some: { userId: actorId || "__anonymous__" } } } }
   });
   if (!actorId || !session) throw new UserError("Session not found or access denied.", "denied");
+  return session;
+}
+
+async function writableSession(tx: Prisma.TransactionClient, actorId: string, sessionId: string, joined = true) {
+  const allowed = await authorizedSession(actorId, sessionId, tx);
+  await tx.$queryRaw`SELECT "id" FROM "TeamSession" WHERE "id" = ${allowed.id} AND "teamId" = ${allowed.teamId} FOR UPDATE`;
+  await member(actorId, allowed.teamId, tx);
+  const session = await tx.teamSession.findUniqueOrThrow({ where: { id: allowed.id } });
+  if (session.kind === "FACILITATED") {
+    if (session.collectionState === "CLOSED") throw new UserError("This session is closed and read-only.", "conflict");
+    if (joined && !await tx.sessionParticipant.findUnique({ where: { sessionId_userId: { sessionId, userId: actorId } } })) {
+      throw new UserError("Join this session before contributing.", "denied");
+    }
+  }
   return session;
 }
 
@@ -41,32 +58,102 @@ export async function listTeams(actorId: string) {
 
 export async function createSession(actorId: string, input: unknown) {
   const data = parse(sessionInput, input);
-  await member(actorId, data.teamId);
-  return db.teamSession.create({ data });
+  return db.$transaction(async tx => {
+    await member(actorId, data.teamId, tx);
+    return tx.teamSession.create({ data });
+  });
+}
+
+export async function createFacilitatedSession(actorId: string, input: unknown) {
+  const data = parse(sessionInput, input);
+  return db.$transaction(async tx => {
+    await member(actorId, data.teamId, tx);
+    const session = await tx.teamSession.create({ data: {
+      ...data, kind: "FACILITATED", facilitatorId: actorId, collectionState: "COLLECTING"
+    } });
+    await tx.sessionParticipant.create({ data: { teamId: session.teamId, sessionId: session.id, userId: actorId } });
+    return session;
+  });
+}
+
+export async function joinSession(actorId: string, input: unknown) {
+  const { sessionId } = parse(joinInput, input);
+  return db.$transaction(async tx => {
+    const session = await writableSession(tx, actorId, sessionId, false);
+    if (session.kind !== "FACILITATED") throw new UserError("This is an action-follow-up session.");
+    return tx.sessionParticipant.upsert({
+      where: { sessionId_userId: { sessionId, userId: actorId } }, update: {},
+      create: { teamId: session.teamId, sessionId, userId: actorId }
+    });
+  });
+}
+
+export async function changeCollection(actorId: string, input: unknown) {
+  const data = parse(lifecycleInput, input);
+  return db.$transaction(async tx => {
+    const session = await writableSession(tx, actorId, data.sessionId);
+    if (session.facilitatorId !== actorId) throw new UserError("Only the facilitator can control collection.", "denied");
+    if (session.lifecycleVersion !== data.version || !session.collectionState || !canTransitionCollection(session.collectionState, data.state)) {
+      throw new UserError("Collection changed. Refresh and try again.", "conflict");
+    }
+    return tx.teamSession.update({ where: { id: session.id }, data: {
+      collectionState: data.state, lifecycleVersion: { increment: 1 }, closedAt: data.state === "CLOSED" ? new Date() : null
+    } });
+  });
+}
+
+export async function createTopic(actorId: string, input: unknown) {
+  const data = parse(topicInput, input);
+  return db.$transaction(async tx => {
+    const session = await writableSession(tx, actorId, data.sessionId);
+    if (session.kind !== "FACILITATED" || session.collectionState !== "COLLECTING") throw new UserError("Topic collection is paused.", "conflict");
+    return tx.topic.create({ data: { ...data, teamId: session.teamId, authorId: actorId } });
+  });
+}
+
+export async function changeTopic(actorId: string, input: unknown, remove = false) {
+  const data = remove ? parse(topicRemoveInput, input) : parse(topicChangeInput, input);
+  return db.$transaction(async tx => {
+    const session = await writableSession(tx, actorId, data.sessionId);
+    if (session.kind !== "FACILITATED" || session.collectionState !== "COLLECTING") throw new UserError("Topic collection is paused.", "conflict");
+    const topic = await tx.topic.findFirst({ where: { id: data.topicId, sessionId: session.id, teamId: session.teamId } });
+    if (!topic) throw new UserError("Topic not found or access denied.", "denied");
+    if (topic.authorId !== actorId && session.facilitatorId !== actorId) throw new UserError("Only the author or facilitator can manage this topic.", "denied");
+    if (topic.version !== data.version || topic.removedAt) {
+      throw new UserError("Topic changed or was removed. Your draft was not saved; refresh and reconcile it.", "conflict");
+    }
+    const update = await tx.topic.updateMany({
+      where: { id: topic.id, version: data.version, removedAt: null },
+      data: remove ? { removedAt: new Date(), removedById: actorId, version: { increment: 1 } }
+        : { ...parse(topicInput, input), version: { increment: 1 } }
+    });
+    if (!update.count) throw new UserError("Topic changed or was removed. Your draft was not saved; refresh and reconcile it.", "conflict");
+  });
 }
 
 export async function createAction(actorId: string, input: unknown) {
   const data = parse(actionInput, input);
-  const session = await authorizedSession(actorId, data.sessionId);
-  const owner = await db.membership.findUnique({
-    where: { teamId_userId: { teamId: session.teamId, userId: data.ownerId } }
-  });
-  if (!owner) throw new UserError("Choose an owner who belongs to this team.");
-  return db.action.create({
-    data: {
-      teamId: session.teamId, sourceSessionId: session.id,
-      title: data.title, context: data.context, ownerId: data.ownerId,
-      dueDate: data.dueDate ? new Date(`${data.dueDate}T00:00:00.000Z`) : null
-    }
+  return db.$transaction(async tx => {
+    const session = await writableSession(tx, actorId, data.sessionId);
+    const owner = await tx.membership.findUnique({
+      where: { teamId_userId: { teamId: session.teamId, userId: data.ownerId } }
+    });
+    if (!owner) throw new UserError("Choose an owner who belongs to this team.");
+    return tx.action.create({
+      data: {
+        teamId: session.teamId, sourceSessionId: session.id,
+        title: data.title, context: data.context, ownerId: data.ownerId,
+        dueDate: data.dueDate ? new Date(`${data.dueDate}T00:00:00.000Z`) : null
+      }
+    });
   });
 }
 
-export async function sessionDetails(actorId: string, sessionId: string) {
-  const session = await authorizedSession(actorId, sessionId);
-  const [members, actions, priorActions, reviews] = await Promise.all([
-    db.membership.findMany({ where: { teamId: session.teamId }, include: { user: true }, orderBy: { userId: "asc" } }),
-    db.action.findMany({ where: { sourceSessionId: session.id, teamId: session.teamId }, include: { owner: { include: { user: true } } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] }),
-    db.action.findMany({
+export async function sessionDetails(actorId: string, sessionId: string, tx: Prisma.TransactionClient = db) {
+  const session = await authorizedSession(actorId, sessionId, tx);
+  const members = await tx.membership.findMany({ where: { teamId: session.teamId }, include: { user: true }, orderBy: { userId: "asc" } });
+  const actions = await tx.action.findMany({ where: { sourceSessionId: session.id, teamId: session.teamId }, include: { owner: { include: { user: true } } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+  const priorActions = await tx.action.findMany({
       where: {
         teamId: session.teamId, status: { not: "DONE" },
         sourceSession: { OR: [
@@ -79,13 +166,12 @@ export async function sessionDetails(actorId: string, sessionId: string) {
         reviews: { where: { reviewSessionId: session.id } }
       },
       orderBy: [{ sourceSession: { createdAt: "asc" } }, { sourceSessionId: "asc" }, { createdAt: "asc" }, { id: "asc" }]
-    }),
-    db.actionReview.findMany({
+    });
+  const reviews = await tx.actionReview.findMany({
       where: { teamId: session.teamId, reviewSessionId: session.id },
       include: { action: true, actor: { include: { user: true } } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }]
-    })
-  ]);
+    });
   return { session, members, actions, priorActions, reviews };
 }
 
@@ -103,9 +189,9 @@ export async function actionDetails(actorId: string, actionId: string) {
 
 export async function reviewAction(actorId: string, input: unknown) {
   const data = parse(reviewInput, input);
-  const session = await authorizedSession(actorId, data.sessionId);
   try {
     return await db.$transaction(async (tx) => {
+      const session = await writableSession(tx, actorId, data.sessionId);
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "Action" WHERE "id" = ${data.actionId} AND "teamId" = ${session.teamId} FOR UPDATE
       `;
