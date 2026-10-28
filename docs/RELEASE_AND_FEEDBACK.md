@@ -8,7 +8,90 @@ An online deployment is not an accepted release. Failed or missing evidence
 keeps release readiness blocked; neither the smoke command nor a green Vercel
 status can waive the gates in `docs/QUALITY_GATES.md`.
 
-## Current candidate: 2026-10-27
+## Current accepted release and next candidate
+
+Facilitated topic collection was explicitly accepted on 2026-10-28 at
+`d22256b1613bca591514a883bf16827d815f28f7`. Final CI, release smoke, actual
+Frankfurt function placement, measured distinct-user hosted updates, action
+follow-up and sign-out evidence are in
+[readiness issue #2](https://github.com/guyvanput/TeamPulse/issues/2).
+The initial action-follow-up acceptance is in closed readiness issue #1.
+
+Voting/prioritization has approved Gate A/B and local implementation tracked in
+`tasks/topic-voting-and-prioritization.md`; it has not been published or accepted.
+Its release additionally needs the voting migration rehearsal/backup and a hosted
+two-user start/select/unselect/finalize/close journey with measured updates,
+privacy/sign-out checks and persisted final ranks. No local fixture proves real
+OAuth or deployed timing.
+
+Timed discussion has approved Gate A/B and local execution tracked in
+`tasks/timed-topic-discussion.md`. Before release, rehearse both new additive
+migrations from the accepted production schema, verify encrypted backup and
+preservation, and repeat the real two-user timer journey (start/pause/resume/
+extend/expire/finish/next/close) with measured updates and retained drafts.
+Verify running/paused timing and history after reload, authorization/sign-out,
+actual function region and source/deployment linkage. Neither local timer
+fixtures nor an approved design replace CI/scans or explicit pilot acceptance.
+The older voting binary is unsafe after discussion use because it lacks the
+current-discussion closure guard; roll forward unless a separate maintenance
+plan is explicitly approved.
+
+Parking has approved Gate A/B with execution in `tasks/parking-lot.md`; it is not
+published or accepted. Its additional migration expands the discussion key,
+preserves old rows as attempt 1 and adds immutable parking-event history.
+Rehearse the full three-migration path from accepted production with an encrypted
+backup and preservation comparison. Separately authorize the coordinated
+write-maintenance/drain/migrate/deploy boundary; do not mix pre-parking and
+parking binaries or destructively restore the singleton key. Hosted acceptance
+must exercise waiting/current deferral, restore during another discussion, fresh
+restarted timebox, repeated retained history, all-parked closure, stale/ambiguous
+saves and two-user measured updates. Local synthetic records are not deployed
+OAuth, migration safety, CI/scans or human acceptance.
+
+Manual agenda order has approved Gate A/B and local execution tracked in
+`tasks/manual-agenda-order.md`; it is not published or accepted. The required
+planning-position column changes finalization writes even before a manual move.
+Rehearse all four unpublished migrations from accepted production, verifying
+every old column, exact original-rank backfill, retained attempts/parking history
+and the named DEFERRABLE INITIALLY IMMEDIATE unique constraint. Separately approve
+encrypted backup and coordinated drain/migrate/matching-binary cutover; no mixed
+old/new binaries or destructive position/history rollback. Hosted acceptance
+must distinguish immutable vote ranks from manual queue order, retain current/
+Discussed slots and unsaved drafts/focus, move/restore parked placeholders, verify
+the next fresh timebox, attribution/reverse/closed history, and measure distinct
+visible users below five seconds. Exercise stale and lost-response commands
+without replay. Local fixtures do not satisfy CI/scans, real OAuth or acceptance.
+
+Meeting summaries have approved Gate A/B and local execution tracked in
+`tasks/meeting-summary.md`; they are not published or accepted. The fifth
+unpublished migration creates empty report storage without rewriting old data.
+Rehearse all five migrations from the accepted schema on an isolated production
+copy, preserving old rows/columns and full histories. Separately authorize the
+encrypted backup and coordinated matching-binary cutover; do not treat earlier
+release consent as approval. Hosted acceptance must generate a permanent
+non-AI report after closure, verify current joined-facilitator permissions and
+plain-text wrap-up, measure distinct visible readers below five seconds and
+retain unused notes after a competing tab. Follow up a captured action later:
+the current action changes, but saved content/names/time must not. Exercise
+unprioritized history, stale/ambiguous commands without replay and access loss.
+Exact 18-table archive/restarted-app proof, new CI/scans, verified deployment
+source/region and explicit human acceptance remain required.
+
+Session administration has approved Gates A/B, with local work/evidence in
+`tasks/session-administration.md`. Its sixth unpublished migration adds a
+retained removal marker and empty attributed event storage, without resetting
+joins or ballots. Rehearse all six migrations from accepted production on an
+isolated copy. Pre-administration binaries ignore removal markers and must not
+be mixed or used for ordinary rollback after removals. Separately authorize the
+encrypted backup and coordinated write-drain/migrate/matching-binary cutover.
+Hosted acceptance must verify immediate sole-facilitator handover, old
+facilitator participant rights, contribution-only removal, explicit readmission
+with original budget, unchanged clocks/reports, focused retained drafts without
+stale powers, measured visible identities below five seconds and one-POST
+ambiguous responses. Exact 19-table recovery, fresh CI/scans, source/region
+linkage and explicit human acceptance remain required.
+
+## Historical candidate: 2026-10-27
 
 Live gate decisions and operator evidence are tracked in
 [the initial pilot readiness issue](https://github.com/guyvanput/TeamPulse/issues/1).
@@ -27,8 +110,9 @@ Live gate decisions and operator evidence are tracked in
 | Backup policy | User approved six-hour Neon recovery plus operator-run encrypted local archives before releases and on each day of pilot use, with seven-day retention. First production archive passed DPAPI decrypt/checksum and `pg_restore --list` verification; no production restore was performed. |
 | Acceptance decision | **Blocked** on the container scan and explicit owner acceptance; hosted admission/journey and archive-recovery evidence are now complete. |
 
-This table describes the published candidate, not any subsequent uncommitted
-changes. Update it or a release-readiness issue when a new candidate is deployed.
+This historical table describes that candidate before remediation/acceptance,
+not the current accepted deployment or subsequent uncommitted changes. Current
+accepted evidence is linked above; record each new candidate in its own issue.
 
 ### Release-loop publication evidence
 

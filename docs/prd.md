@@ -3,10 +3,10 @@
 | Property | Value |
 |-----------|---------|
 | Product | TeamPulse |
-| Version | 1.2 |
+| Version | 1.8 |
 | Status | Draft |
 | Author | Guy Van Put |
-| Date | 2026-10-27 |
+| Date | 2026-10-28 |
 | Type | Open-source reference application for an AI-assisted SDLC demonstration |
 
 ---
@@ -255,6 +255,102 @@ The owner approved the complete specification (Gate A) on 2026-10-27.
 The owner approved the technical design (Gate B) on 2026-10-27; see
 [the second-slice design](../design/facilitated-topic-collection.md).
 Voting, timers, parking lots, and summaries remain subsequent Release 1 work.
+
+The owner accepted the deployed second slice on 2026-10-28 at source `d22256b`;
+verified rollout and acceptance are recorded in
+[readiness issue #2](https://github.com/guyvanput/TeamPulse/issues/2).
+
+## Third Delivery Slice
+
+Vote on collected topics and finalize an automatically prioritized agenda.
+The proposed product rules, boundaries and planned acceptance coverage are in
+[the voting specification](../spec/topic-voting-and-prioritization.md).
+The owner approved Gate A on 2026-10-28, including the three-vote budget,
+one-round lifecycle, topic freeze, visibility and tie-break rules.
+The proposed design is in
+[the voting technical design](../design/topic-voting-and-prioritization.md).
+The owner approved Gate B on 2026-10-28. Implementation and verification are
+tracked in `tasks/topic-voting-and-prioritization.md`; voting is not yet a released
+or accepted capability.
+Discussion timers, parking lots, manual agenda reordering and summaries remain
+separate later slices.
+
+## Fourth Delivery Slice
+
+Run timed topic discussions from the finalized agenda. The approved rules and
+planned acceptance coverage are in
+[the timed-discussion specification](../spec/timed-topic-discussion.md).
+The owner approved Gate A on 2026-10-28: the five-minute timebox, repeatable
+two-minute extension, single ordered pass and explicit expiry/completion/closure
+behavior. The proposed design is in
+[the timed-discussion technical design](../design/timed-topic-discussion.md).
+The owner approved Gate B on 2026-10-28. Implementation and verification are
+tracked in `tasks/timed-topic-discussion.md`; timers are not a released capability.
+Parking lots, manual agenda reordering and summaries remain separate slices.
+Preparing this slice does not publish or accept the voting implementation.
+
+## Fifth Delivery Slice
+
+Defer unfinished topics into a shared parking lot and restore them before closure
+without changing final vote ranks or losing earlier timeboxes. Approved rules and
+planned acceptance coverage are in
+[the parking-lot specification](../spec/parking-lot.md).
+The owner approved Gate A on 2026-10-28: finalization-only availability,
+reason/history retention, fresh timeboxes after restoration and the explicit
+eligibility/closure changes. The approved technical design is in
+[the parking-lot design](../design/parking-lot.md). The owner approved Gate B
+on the same date. Execution is tracked in `tasks/parking-lot.md`; implementation
+and release evidence remain separate from approval. Manual reordering and
+meeting summaries remain later Release 1 slices.
+
+## Sixth Delivery Slice
+
+Allow explicit facilitator reordering of the future discussion queue while
+preserving original vote results, current timeboxes and historical outcomes.
+The approved requirements and review examples are in
+[the manual-agenda-order specification](../spec/manual-agenda-order.md).
+The owner approved Gate A on 2026-10-28, including the intentional choice that
+restored topics respect saved manual queue positions once an explicit manual move
+has occurred. The proposed design is in
+[the manual-agenda-order design](../design/manual-agenda-order.md).
+The owner approved Gate B on the same date; implementation/evidence are tracked in
+`tasks/manual-agenda-order.md`. This is not a published or accepted capability.
+Meeting summaries and remaining participant/
+role-management requirements remain separate Release 1 work.
+
+## Seventh Delivery Slice
+
+Generate a durable, deterministic report after closing a facilitated session,
+with an optional facilitator-written wrap-up and owned-action details explicitly
+captured at generation time. The proposal and deliberate review decisions are in
+[the meeting-summary specification](../spec/meeting-summary.md).
+The owner approved Gate A on 2026-10-28. The proposed technical design is in
+[the meeting-summary design](../design/meeting-summary.md); the owner approved
+Gate B on the same date. Execution is tracked in `tasks/meeting-summary.md`.
+The local implementation stores immutable reports and retains captured action
+values while later follow-up continues. It is not published or accepted.
+This does not approve AI summarization, editing/regeneration, exports,
+participant administration or release.
+
+## Eighth Delivery Slice
+
+Complete basic session role/participant management: explicit handover to a joined
+member, contribution suspension/readmission and protected administration history,
+without deleting prior contributions or interrupting a timer. Proposed rules and
+Gate A review choices are in
+[the session-administration specification](../spec/session-participant-and-role-management.md).
+The owner approved Gate A on 2026-10-28. The proposed design is in
+`design/session-participant-and-role-management.md`; the owner approved Gate B
+on the same date. Local execution is tracked in `tasks/session-administration.md`;
+no publication, production operation or acceptance is authorized.
+Team membership administration, invitations, co-facilitators and Closed-role
+changes are excluded from this proposal.
+
+The approved local implementation now supports immediate handover, retained
+removal/readmission and protected history across all contribution guards and
+private capabilities. Existing joins/ballots, clocks and saved reports are
+preserved. The task document records final aggregate and recovered-app evidence;
+local completion is not approval to publish or cut over production.
 
 ## Demonstration Success Criteria
 

@@ -25,8 +25,15 @@ export async function fixture(db: ReturnType<typeof testDatabase>) {
 
 export async function cleanFixture(db: ReturnType<typeof testDatabase>, data: Awaited<ReturnType<typeof fixture>>) {
   const teamId = { in: [data.alpha.id, data.beta.id] };
+  await db.sessionAdministrationEvent.deleteMany({ where: { teamId } });
+  await db.sessionSummary.deleteMany({ where: { teamId } });
   await db.actionReview.deleteMany({ where: { teamId } });
   await db.action.deleteMany({ where: { teamId } });
+  await db.agendaOrderChange.deleteMany({ where: { teamId } });
+  await db.topicParkingEvent.deleteMany({ where: { teamId } });
+  await db.topicDiscussion.deleteMany({ where: { teamId } });
+  await db.agendaEntry.deleteMany({ where: { teamId } });
+  await db.topicVote.deleteMany({ where: { teamId } });
   await db.topic.deleteMany({ where: { teamId } });
   await db.sessionParticipant.deleteMany({ where: { teamId } });
   await db.teamSession.deleteMany({ where: { teamId } });

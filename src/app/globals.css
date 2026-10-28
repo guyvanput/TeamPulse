@@ -23,6 +23,7 @@ input, textarea, select { width: 100%; font: inherit; padding: .7rem .8rem; bord
 textarea { resize: vertical; }
 button { width: fit-content; border: 0; border-radius: 8px; padding: .75rem 1.15rem; background: var(--accent); color: white; font: inherit; font-weight: 650; cursor: pointer; }
 button:disabled { opacity: .65; cursor: wait; }
+button[aria-disabled="true"] { opacity: .65; cursor: not-allowed; }
 .secondary { color: var(--ink); background: #edf2f1; }
 :focus-visible { outline: 3px solid #b65e00; outline-offset: 4px; }
 .action { border-top: 1px solid var(--border); padding: 1.25rem 0; }

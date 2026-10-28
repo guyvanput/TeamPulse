@@ -22,7 +22,20 @@ export const topicInput = joinInput.extend({
 });
 export const topicChangeInput = topicInput.extend({ topicId: id, version });
 export const topicRemoveInput = joinInput.extend({ topicId: id, version });
+export const discussionInput = topicRemoveInput;
+export const discussionOperation = z.enum(["start", "pause", "resume", "extend", "finish"]);
+export const restoreInput = topicRemoveInput.strict();
+export const parkInput = restoreInput.extend({ reason: z.string().trim().max(4000, "Use at most 4000 characters.").default("") }).strict();
+export const parkingOperation = z.enum(["park", "restore"]);
+export const moveAgendaInput = restoreInput.extend({ neighborTopicId: id, direction: z.enum(["earlier", "later"]) }).strict();
 export const lifecycleInput = joinInput.extend({ state: collectionState, version });
+export const votingLifecycleInput = joinInput.extend({ version });
+export const generateSummaryInput = votingLifecycleInput.extend({ note: z.string().trim().max(4000, "Use at most 4000 characters.").default("") }).strict();
+export const administrationInput = votingLifecycleInput.extend({ targetId: id }).strict();
+export const removalInput = administrationInput.extend({ reason: z.string().trim().max(4000, "Use at most 4000 characters.").default("") }).strict();
+export const administrationOperation = z.enum(["transfer", "remove", "readmit"]);
+export const voteInput = topicRemoveInput.extend({ selected: z.boolean() });
+export const votingState = z.enum(["NOT_STARTED", "OPEN", "FINALIZED"]);
 export function canTransitionCollection(from: CollectionState, to: CollectionState) {
   return from !== "CLOSED" && from !== to;
 }

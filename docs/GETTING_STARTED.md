@@ -27,6 +27,12 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 Put the generated value in `AUTH_SECRET` in `.env`. Never commit or share it.
 Do not overwrite an existing `.env` when repeating setup.
 
+If this checkout's ignored `.env` already targets the accepted hosted pilot,
+leave it intact and override both `DATABASE_URL` and `DATABASE_URL_UNPOOLED` in
+the local shell for unreleased development/testing. Do not run pending migrations
+against the pilot merely to start the newer local application. Production
+migration and rollout require their separate authorization and release evidence.
+
 Choose one database option:
 
 | Option | Start command | Database port |
@@ -97,18 +103,213 @@ is invented and no existing action/review is converted.
    They can read before joining, but must join before contributing.
 3. Submit topics. Authors can edit/remove their own topics; the facilitator can
    manage all topics. Confirmed removals remain in session history.
-4. The facilitator pauses/resumes collection or permanently closes the session.
+4. Before voting starts, the facilitator pauses/resumes collection or permanently closes the session.
    Closed sessions are read-only; unresolved actions remain reviewable later.
 5. On visible online pages, saved changes are refreshed automatically. Offline
    or failed updates are explicitly marked stale and disable writes until retry
    succeeds. Unsaved drafts survive shared updates, not page reloads or loss of
    authorization.
 
-This is not yet voting, timers, parking lots, or summaries. The five-second shared
+The accepted second slice does not include voting, timers, parking lots, or
+summaries. The third-slice voting implementation is described below; it is not
+yet published. The five-second shared
 update target is for normal small-team connectivity, not an availability SLA.
 Do not roll back to the first-slice binary while facilitated sessions are writable:
 it does not enforce the new lifecycle rules. Production migration and publication
 remain separate operator decisions; see `design/facilitated-topic-collection.md`.
+
+## Voting and automatic prioritization (third slice, not yet released)
+
+Gate A and Gate B are approved in `spec/topic-voting-and-prioritization.md` and
+`design/topic-voting-and-prioritization.md`. Apply the additive
+`20261028090000_topic_voting` migration to the intended development/test database.
+Existing sessions keep their original history and start with no voting round.
+
+1. Collect at least one active topic, then pause collection.
+2. The facilitator selects "Start voting" and confirms the permanent topic freeze.
+   This is the only voting round; collection cannot resume afterward.
+3. Joined members, including late joiners and the facilitator, can select up to
+   three distinct topics, including their own. "Remove my vote" refunds one vote.
+   Other people's named ballots are not displayed; aggregate totals are live,
+   so this is not a secret ballot.
+4. The provisional agenda sorts by total votes, original creation time, then
+   stable topic ID. Interactive topic cards keep their original order so live
+   priority changes do not move a focused voting control or discard a draft.
+5. The facilitator selects "Finish voting" and confirms. Unused votes and zero
+   votes are allowed. Finalization stores every active topic's rank/count, including
+   zero-vote topics. The round cannot reopen.
+6. Capture/review actions while the session is nonclosed, then close when ready.
+   Open voting must be finalized, and any current discussion finished or explicitly
+   parked, before closure. Final agenda/history remain
+   readable; unresolved actions can still be followed up in later sessions.
+
+Unsaved drafts are in-memory only, retained while voting locks topic changes,
+and cleared on reload or access loss. A stale ballot from another tab produces
+an explicit conflict: refresh/reconcile rather than repeatedly replaying it.
+Saved contributions remain counted after membership revocation; restoration of
+the same user's access does not reset their budget.
+
+Before any production migration, verify the encrypted backup and rehearse on an
+isolated production-copy branch. After voting is used, do not roll back to the
+pre-voting application; prefer a forward fix or an explicitly approved maintenance
+plan. Local acceptance is not CI, hosted OAuth/latency evidence or pilot acceptance.
+The voting task document records which steps have actually run.
+
+## Timed topic discussion (fourth slice, not yet released)
+
+Gate A/B are approved in `spec/timed-topic-discussion.md` and
+`design/timed-topic-discussion.md`. Apply the additive
+`20261028100000_timed_topic_discussion` migration after voting, only to the
+intended development/test target. Existing sessions receive no invented progress.
+
+1. Finalize voting. The facilitator selects "Start next topic" to begin the first
+   remaining topic in saved priority order with five minutes.
+2. "Pause timer" preserves exact remaining time; "Resume timer" continues it.
+   "Extend by two minutes" adds time, staying paused if paused.
+3. Expiry shows zero without advancing. Extend an expired discussion for a fresh
+   two minutes, or select "Finish topic" and confirm permanent Discussed status.
+4. Start the next topic separately. There is no skip, park, custom duration,
+   manual reorder or restart operation in this slice.
+5. Finish any current discussion before closing, including an expired one.
+   Early closure leaves unstarted topics Not discussed. Capture/review actions
+   through the existing nonclosed joined-member workflow.
+
+Timer controls await initial synchronization. The displayed countdown is an
+estimate anchored to a server sample and monotonic elapsed time, not the device
+wall clock. The database decides actual expiry and authorizes every command.
+Offline/stale state stops claiming current time and disables writes; reconnect
+and reconcile before retrying an ambiguous command. No automatic replay.
+Running time continues across app downtime; paused time does not. Vote results
+and saved priority ranks stay unchanged.
+
+After discussion is used, do not roll back to the older voting binary: it lacks
+the current-discussion close guard. Prefer roll-forward; backup, isolated
+production-copy rehearsal and separate rollout authorization remain required.
+See `tasks/timed-topic-discussion.md` for actual results and pending release work.
+
+## Parking lot (fifth slice, not yet released)
+
+Gate A/B are approved in `spec/parking-lot.md` and `design/parking-lot.md`.
+Apply `20261028110000_parking_lot` after timed discussion, only to the intended
+development/test target. The migration preserves original columns/rows and expands
+the discussion key to numbered attempts; existing started discussions become
+attempt 1, with no fabricated parking history.
+
+1. After voting is finalized, the facilitator may park a waiting or current
+   topic with an optional reason. Confirming current parking stops its timer
+   as Deferred, not Discussed, retaining exact remaining time and attribution.
+2. No next topic starts automatically. Parked topics keep their vote rank/count
+   and are skipped by the next explicit start.
+3. Confirm Restore to return a topic to original-rank eligibility unless the
+   facilitator explicitly changed its saved planning position (sixth slice below). It does not
+   interrupt another current topic or start/resume a timer. Its next explicit
+   start gets a fresh five minutes, with every earlier attempt retained.
+4. Repeat cycles are allowed until Discussed. Parking a waiting topic never
+   invents a timebox. Permanent Discussed topics cannot restart.
+5. All remaining topics parked is not All discussed. Restore or close when ready;
+   current discussions must still be finished or explicitly parked before close.
+   Closed history keeps distinct parked, unstarted and Discussed outcomes,
+   reasons, people/times, every park/restore cycle and Deferred timeboxes.
+
+Cancellation and uncertain saves retain reason drafts. Confirmations capture
+their original revision; cancel/review after remote changes, never blindly replay.
+The history is protected by current team membership, including for nonjoined
+readers; only the joined facilitator administers it.
+
+Do not run older binaries against the expanded parking schema. Production needs
+separately approved backup/rehearsal and a coordinated write-maintenance/cutover
+plan; roll forward, never drop repeat-attempt history to restore the old key.
+See `tasks/parking-lot.md` for actual verification and pending release evidence.
+
+## Manual agenda order (sixth slice, not yet released)
+
+Gate A/B are approved in `spec/manual-agenda-order.md` and
+`design/manual-agenda-order.md`. Apply `20261028120000_manual_agenda_order` after
+parking only to the intended development/test database. It preserves all old
+rows/columns and initializes saved planning positions from original vote ranks,
+without fabricated move history.
+
+1. After voting is finalized, the joined facilitator uses topic-specific Move
+   earlier / Move later buttons. Keyboard activation works without a drag gesture
+   or modal confirmation. Boundaries/current/Discussed topics are unavailable.
+2. The read-only Discussion queue changes; original Final agenda vote results
+   and all current clocks stay unchanged. Current/Discussed physical slots
+   remain fixed; adjacent future neighbors can be separated by those slots.
+3. Parked topics keep visible planned positions but are skipped. Restore returns
+   eligibility at the saved planning slot, not necessarily original vote rank.
+   Restoring never starts/interrupts a timer; next explicit starts remain fresh
+   five-minute timeboxes with old attempts retained.
+4. Every successful move retains actor/time and before/after future order.
+   Reverse moves do not erase history; closed sessions retain it read-only.
+5. Busy/offline/hidden/unsynchronized controls cannot mutate. A stale neighbor
+   conflicts; an uncertain save reconciles without replay. Unsaved action/review/
+   reason drafts survive updates, not reloads or lost authorization. Move controls
+   stay in original-topic order to preserve keyboard focus.
+
+This required column changes voting finalization even before the first move:
+do not mix pre-order and current binaries. Production requires a separately
+approved encrypted backup, rehearsal of all four unpublished migrations from
+the accepted schema, and coordinated write drain/migrate/matching-binary cutover.
+Do not drop positions/history for ordinary rollback; roll forward. See
+`tasks/manual-agenda-order.md` for actual local and still-pending release evidence.
+
+## Meeting summary (seventh slice, not yet released)
+
+Gate A/B are approved in `spec/meeting-summary.md` and `design/meeting-summary.md`.
+Apply `20261028130000_meeting_summary` after manual order only to the intended
+development/test database. Old sessions receive no fabricated report.
+
+1. Close the facilitated session. Existing topics, votes, order, timers, actions
+   and reviews remain read-only.
+2. The current joined facilitator may enter an optional plain-text wrap-up,
+   at most 4,000 characters, then select Generate summary.
+3. Review the captured note and permanent-creation warning. Confirm to save one
+   non-AI report; cancel keeps the draft. There is no edit/regenerate operation.
+4. Current team members, including nonjoined readers, can revisit the report
+   through protected session history and its summary anchor. Unprioritized
+   meetings say Voting: Not held, without fictional ranks or discussion.
+5. Action details are captured at generation, not meeting close. Current-action
+   links may show later progress, but cannot rewrite this saved report.
+6. Another tab's winning report is shown explicitly. A differing local wrap-up
+   remains labelled not included until dismissed. Offline/hidden/invalid updates
+   disable generation; uncertain saves reconcile by reading, never replaying.
+   Reload or access loss clears local drafts.
+
+There is no AI, export, public link or automatic report. See
+`tasks/meeting-summary.md` for actual evidence. Before production, separately
+authorize encrypted backup, isolated production-copy rehearsal of all five
+unpublished migrations, coordinated drain/migrate/matching-binary cutover and
+the hosted OAuth/two-identity acceptance journey. Local success does not authorize
+any of those operations.
+
+## Session administration (eighth slice, not yet released)
+
+Gates A/B are approved in `spec/session-participant-and-role-management.md` and
+`design/session-participant-and-role-management.md`. Apply
+`20261028140000_session_administration` after meeting summary only to the
+intended development/test database. Existing joins start active; no historical
+events are invented.
+
+The current active joined facilitator can transfer immediately to another active
+joined team member, remove another participant from contributing, or explicitly
+readmit a removed participant. Review the named target and captured revision,
+then confirm. Optional removal reasons are plain text, at most 4,000 characters.
+These operations are available during voting/discussion but never alter clocks
+or contributions. The previous facilitator remains an ordinary participant.
+Closed and legacy sessions cannot be administered.
+
+Removal does not revoke same-team reading. A removed user cannot self-rejoin;
+readmission restores their original join, selected votes and used budget.
+Historical joining is not evidence of attendance or current permission.
+Previously displayed facilitator controls/drafts remain mounted but lose current
+permission after handover. Stale confirmations require cancellation and review;
+uncertain responses are read back, never automatically replayed.
+
+See `tasks/session-administration.md` for execution evidence. Pre-administration
+binaries ignore removal markers: do not run mixed versions or roll back to those
+binaries after removals. Production requires separately authorized encrypted
+backup, rehearsal of all six unpublished migrations from the accepted schema,
+coordinated write drain/migrate/matching-binary cutover and hosted acceptance.
 
 ## Automated checks
 
@@ -123,6 +324,7 @@ Apply the same migrations to that database in a separate shell:
 
 ```powershell
 $env:DATABASE_URL = 'postgresql://teampulse:local-dev-only@127.0.0.1:55432/teampulse_test'
+$env:DATABASE_URL_UNPOOLED = $env:DATABASE_URL
 npm.cmd run db:migrate
 npx.cmd playwright install chromium
 npm.cmd run gate:merge
@@ -148,6 +350,19 @@ For an independent archive/recovered-app drill, install PostgreSQL 17
 running and port 3102 free. This command refuses remote databases, uses only
 randomly named local `_test` databases and synthetic records, and removes its
 databases/app process afterward. See the release runbook for measured evidence.
+It compares every public table, continues restored Open voting, verifies stored
+Finalized ranks/counts, and restarts the isolated application process to check
+that neither ballots, final agenda nor running/paused/expired/finished discussion
+deadlines, remaining time or history relies on server memory. Repeated parking/
+restoration, manually saved full planning positions, original vote ranks,
+current/Discussed frozen slots and attributed/reverse order-change history are
+also compared and verified after an actual recovered-app restart.
+The exact 19-table comparison includes immutable summaries and administration
+events. Transferred/removed permissions, repeated removal/readmission history,
+original joins and used ballots survive restoration. The new facilitator
+explicitly readmits a participant without changing running clocks. A restored live
+action is completed afterward; captured report contents, attribution and time
+must remain identical before and after the app-process restart.
 
 ## Neon personal pilot
 

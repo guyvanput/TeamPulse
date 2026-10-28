@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActor } from "@/lib/actor";
 import { auth } from "@/auth";
-import { createAction, createSession, createFacilitatedSession, joinSession, createTopic, changeTopic, changeCollection, reviewAction, UserError } from "@/lib/service";
+import { createAction, createSession, createFacilitatedSession, joinSession, createTopic, changeTopic, changeCollection, reviewAction, startVoting, setTopicVote, finalizeVoting, controlDiscussion, controlParking, moveAgendaTopic, generateMeetingSummary, administerSession, UserError } from "@/lib/service";
 
 export type FormState = { error?: string; success?: string };
 
@@ -32,7 +32,7 @@ export async function addSession(_state: FormState, form: FormData): Promise<For
   redirect(`/sessions/${id}`);
 }
 
-export async function sessionCommand(command: "join" | "topic" | "edit" | "remove" | "state" | "action" | "review", input: unknown): Promise<FormState & { denied?: boolean }> {
+export async function sessionCommand(command: "join" | "topic" | "edit" | "remove" | "state" | "action" | "review" | "start-voting" | "vote" | "finalize-voting" | "start-discussion" | "pause-discussion" | "resume-discussion" | "extend-discussion" | "finish-discussion" | "park-topic" | "restore-topic" | "move-agenda-topic" | "generate-summary" | "transfer-facilitator" | "remove-participant" | "readmit-participant", input: unknown): Promise<FormState & { denied?: boolean }> {
   const session = await auth();
   if (!session?.user?.id) return { error: "Sign in to continue.", denied: true };
   try {
@@ -45,6 +45,21 @@ export async function sessionCommand(command: "join" | "topic" | "edit" | "remov
       case "state": await changeCollection(actor, input); break;
       case "action": await createAction(actor, input); break;
       case "review": await reviewAction(actor, input); break;
+      case "start-voting": await startVoting(actor, input); break;
+      case "vote": await setTopicVote(actor, input); break;
+      case "finalize-voting": await finalizeVoting(actor, input); break;
+      case "start-discussion": await controlDiscussion(actor, input, "start"); break;
+      case "pause-discussion": await controlDiscussion(actor, input, "pause"); break;
+      case "resume-discussion": await controlDiscussion(actor, input, "resume"); break;
+      case "extend-discussion": await controlDiscussion(actor, input, "extend"); break;
+      case "finish-discussion": await controlDiscussion(actor, input, "finish"); break;
+      case "park-topic": await controlParking(actor, input, "park"); break;
+      case "restore-topic": await controlParking(actor, input, "restore"); break;
+      case "move-agenda-topic": await moveAgendaTopic(actor, input); break;
+      case "generate-summary": await generateMeetingSummary(actor, input); break;
+      case "transfer-facilitator": await administerSession(actor, input, "transfer"); break;
+      case "remove-participant": await administerSession(actor, input, "remove"); break;
+      case "readmit-participant": await administerSession(actor, input, "readmit"); break;
       default: throw new UserError("Unknown session operation.");
     }
     return { success: "Change saved." };

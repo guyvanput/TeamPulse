@@ -7,18 +7,24 @@ datasource db {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  name                String?
-  email               String?              @unique
-  emailVerified       DateTime?
-  image               String?
-  accounts            Account[]
-  sessions            Session[]
-  memberships         Membership[]
-  facilitatedSessions TeamSession[]        @relation("Facilitator")
-  participation       SessionParticipant[]
-  topics              Topic[]              @relation("TopicAuthor")
-  removedTopics       Topic[]              @relation("TopicRemover")
+  id                   String                       @id @default(uuid())
+  name                 String?
+  email                String?                      @unique
+  emailVerified        DateTime?
+  image                String?
+  accounts             Account[]
+  sessions             Session[]
+  memberships          Membership[]
+  facilitatedSessions  TeamSession[]                @relation("Facilitator")
+  participation        SessionParticipant[]
+  topics               Topic[]                      @relation("TopicAuthor")
+  removedTopics        Topic[]                      @relation("TopicRemover")
+  startedDiscussions   TopicDiscussion[]            @relation("DiscussionStarter")
+  finishedDiscussions  TopicDiscussion[]            @relation("DiscussionFinisher")
+  parkingEvents        TopicParkingEvent[]
+  agendaChanges        AgendaOrderChange[]
+  summaries            SessionSummary[]
+  administrationEvents SessionAdministrationEvent[]
 }
 
 model Account {
@@ -74,24 +80,44 @@ model Membership {
 }
 
 model TeamSession {
-  id               String               @id @default(uuid())
-  teamId           String
-  title            String
-  createdAt        DateTime             @default(now())
-  team             Team                 @relation(fields: [teamId], references: [id])
-  actions          Action[]             @relation("Source")
-  reviews          ActionReview[]       @relation("ReviewSession")
-  kind             SessionKind          @default(ACTION_FOLLOW_UP)
-  facilitatorId    String?
-  collectionState  CollectionState?
-  lifecycleVersion Int                  @default(0)
-  closedAt         DateTime?
-  facilitator      User?                @relation("Facilitator", fields: [facilitatorId], references: [id], onDelete: Restrict)
-  participants     SessionParticipant[]
-  topics           Topic[]
+  id                   String                       @id @default(uuid())
+  teamId               String
+  title                String
+  createdAt            DateTime                     @default(now())
+  team                 Team                         @relation(fields: [teamId], references: [id])
+  actions              Action[]                     @relation("Source")
+  reviews              ActionReview[]               @relation("ReviewSession")
+  kind                 SessionKind                  @default(ACTION_FOLLOW_UP)
+  facilitatorId        String?
+  collectionState      CollectionState?
+  lifecycleVersion     Int                          @default(0)
+  closedAt             DateTime?
+  facilitator          User?                        @relation("Facilitator", fields: [facilitatorId], references: [id], onDelete: Restrict)
+  participants         SessionParticipant[]
+  topics               Topic[]
+  votingState          VotingState                  @default(NOT_STARTED)
+  votingStartedAt      DateTime?
+  votingFinalizedAt    DateTime?
+  summary              SessionSummary?
+  administrationEvents SessionAdministrationEvent[]
 
   @@unique([teamId, id])
   @@index([teamId, createdAt, id])
+}
+
+model SessionSummary {
+  teamId          String
+  sessionId       String      @id
+  generatedById   String
+  generatedByName String
+  generatedAt     DateTime
+  formatVersion   Int         @default(1)
+  note            String      @default("")
+  content         Json
+  session         TeamSession @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
+  generatedBy     User        @relation(fields: [generatedById], references: [id], onDelete: Restrict)
+
+  @@unique([teamId, sessionId])
 }
 
 enum SessionKind {
@@ -105,34 +131,183 @@ enum CollectionState {
   CLOSED
 }
 
+enum VotingState {
+  NOT_STARTED
+  OPEN
+  FINALIZED
+}
+
 model SessionParticipant {
-  teamId    String
-  sessionId String
-  userId    String
-  joinedAt  DateTime    @default(now())
-  session   TeamSession @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
-  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  teamId               String
+  sessionId            String
+  userId               String
+  joinedAt             DateTime                     @default(now())
+  ballotVersion        Int                          @default(0)
+  removedAt            DateTime?
+  session              TeamSession                  @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  votes                TopicVote[]
+  administrationEvents SessionAdministrationEvent[]
 
   @@id([sessionId, userId])
+  @@unique([teamId, sessionId, userId])
+}
+
+enum SessionAdministrationKind {
+  TRANSFER
+  REMOVE
+  READMIT
+}
+
+model SessionAdministrationEvent {
+  teamId    String
+  sessionId String
+  version   Int
+  kind      SessionAdministrationKind
+  actorId   String
+  targetId  String
+  createdAt DateTime
+  reason    String                    @default("")
+  session   TeamSession               @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
+  actor     User                      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  target    SessionParticipant        @relation(fields: [teamId, sessionId, targetId], references: [teamId, sessionId, userId], onDelete: Restrict)
+
+  @@id([sessionId, version])
 }
 
 model Topic {
-  id          String      @id @default(uuid())
+  id            String        @id @default(uuid())
+  teamId        String
+  sessionId     String
+  authorId      String
+  title         String
+  description   String        @default("")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  version       Int           @default(0)
+  removedAt     DateTime?
+  removedById   String?
+  session       TeamSession   @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
+  author        User          @relation("TopicAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  removedBy     User?         @relation("TopicRemover", fields: [removedById], references: [id], onDelete: Restrict)
+  votes         TopicVote[]
+  agendaEntries AgendaEntry[]
+
+  @@unique([teamId, sessionId, id])
+  @@index([teamId, sessionId, createdAt, id])
+}
+
+model TopicVote {
   teamId      String
   sessionId   String
-  authorId    String
-  title       String
-  description String      @default("")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  version     Int         @default(0)
-  removedAt   DateTime?
-  removedById String?
-  session     TeamSession @relation(fields: [teamId, sessionId], references: [teamId, id], onDelete: Restrict)
-  author      User        @relation("TopicAuthor", fields: [authorId], references: [id], onDelete: Restrict)
-  removedBy   User?       @relation("TopicRemover", fields: [removedById], references: [id], onDelete: Restrict)
+  userId      String
+  topicId     String
+  createdAt   DateTime           @default(now())
+  participant SessionParticipant @relation(fields: [teamId, sessionId, userId], references: [teamId, sessionId, userId], onDelete: Restrict)
+  topic       Topic              @relation(fields: [teamId, sessionId, topicId], references: [teamId, sessionId, id], onDelete: Restrict)
 
-  @@index([teamId, sessionId, createdAt, id])
+  @@id([sessionId, userId, topicId])
+  @@index([teamId, sessionId, topicId])
+}
+
+model AgendaEntry {
+  teamId             String
+  sessionId          String
+  topicId            String
+  position           Int
+  voteCount          Int
+  discussionPosition Int
+  topic              Topic               @relation(fields: [teamId, sessionId, topicId], references: [teamId, sessionId, id], onDelete: Restrict)
+  discussions        TopicDiscussion[]
+  parkingEvents      TopicParkingEvent[]
+  movedChanges       AgendaOrderChange[] @relation("MovedAgendaTopic")
+  neighborChanges    AgendaOrderChange[] @relation("NeighborAgendaTopic")
+
+  @@id([sessionId, topicId])
+  @@unique([sessionId, position])
+  @@unique([sessionId, discussionPosition], map: "AgendaEntry_sessionId_discussionPosition_key")
+  @@unique([teamId, sessionId, topicId])
+}
+
+enum AgendaMoveDirection {
+  EARLIER
+  LATER
+}
+
+model AgendaOrderChange {
+  teamId          String
+  sessionId       String
+  version         Int
+  actorId         String
+  createdAt       DateTime
+  topicId         String
+  neighborTopicId String
+  direction       AgendaMoveDirection
+  beforeQueue     Json
+  afterQueue      Json
+  actor           User                @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  topic           AgendaEntry         @relation("MovedAgendaTopic", fields: [teamId, sessionId, topicId], references: [teamId, sessionId, topicId], onDelete: Restrict)
+  neighbor        AgendaEntry         @relation("NeighborAgendaTopic", fields: [teamId, sessionId, neighborTopicId], references: [teamId, sessionId, topicId], onDelete: Restrict)
+
+  @@id([sessionId, version])
+}
+
+enum DiscussionState {
+  RUNNING
+  PAUSED
+  FINISHED
+}
+
+enum DiscussionOutcome {
+  DISCUSSED
+  DEFERRED
+}
+
+enum ParkingEventKind {
+  PARK
+  RESTORE
+}
+
+model TopicDiscussion {
+  teamId        String
+  sessionId     String
+  topicId       String
+  state         DiscussionState
+  deadlineAt    DateTime?
+  remainingMs   Int?
+  allocatedMs   Int
+  startedAt     DateTime
+  finishedAt    DateTime?
+  startedById   String
+  finishedById  String?
+  attemptNumber Int                @default(1)
+  outcome       DiscussionOutcome?
+  agenda        AgendaEntry        @relation(fields: [teamId, sessionId, topicId], references: [teamId, sessionId, topicId], onDelete: Restrict)
+  startedBy     User               @relation("DiscussionStarter", fields: [startedById], references: [id], onDelete: Restrict)
+  finishedBy    User?              @relation("DiscussionFinisher", fields: [finishedById], references: [id], onDelete: Restrict)
+  parkingEvent  TopicParkingEvent?
+
+  @@id([sessionId, topicId, attemptNumber])
+  @@unique([teamId, sessionId, topicId, attemptNumber])
+}
+
+model TopicParkingEvent {
+  teamId        String
+  sessionId     String
+  topicId       String
+  version       Int
+  kind          ParkingEventKind
+  reason        String           @default("")
+  createdAt     DateTime
+  actorId       String
+  attemptNumber Int?
+  agenda        AgendaEntry      @relation(fields: [teamId, sessionId, topicId], references: [teamId, sessionId, topicId], onDelete: Restrict)
+  actor         User             @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  attempt       TopicDiscussion? @relation(fields: [teamId, sessionId, topicId, attemptNumber], references: [teamId, sessionId, topicId, attemptNumber], onDelete: Restrict, map: "TopicParkingEvent_attempt_fkey")
+
+  @@id([sessionId, version])
+  @@unique([teamId, sessionId, topicId, attemptNumber])
+  @@index([teamId, sessionId, topicId, version])
 }
 
 enum ActionStatus {
