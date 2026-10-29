@@ -1,10 +1,13 @@
-import Link from "next/link";
 import { requireActor } from "@/lib/actor";
-import { listTeams } from "@/lib/service";
+import { listSessionHistory, listTeams } from "@/lib/service";
 import { SessionForm } from "@/components/forms";
+import { SessionHistory } from "@/components/session-history";
 
 export default async function Home() {
-  const teams = await listTeams(await requireActor());
+  const actor = await requireActor();
+  const teams = await Promise.all((await listTeams(actor)).map(async (team) => ({
+    ...team, history: await listSessionHistory(actor, { teamId: team.id, filter: "ALL" })
+  })));
   return <>
     <p className="eyebrow">YOUR TEAM WORKSPACE</p>
     <h1>Good conversations.<br /><span>Lasting improvements.</span></h1>
@@ -16,9 +19,7 @@ export default async function Home() {
           <h3>Collect discussion topics</h3><SessionForm teamId={team.id} facilitated />
         </div>
         <div><h3>Session history</h3>
-          {team.sessions.length ? <ul className="session-list">{team.sessions.map((session) =>
-            <li key={session.id}><Link href={`/sessions/${session.id}`}>{session.title}</Link>
-              <small>{session.createdAt.toISOString().slice(0, 10)} / {session.kind === "FACILITATED" ? "Facilitated session" : "Action follow-up session"}</small></li>)}</ul> : <p>No sessions yet. Start your first one.</p>}
+          <SessionHistory teamId={team.id} initial={team.history} />
         </div>
       </div>
     </section>)}

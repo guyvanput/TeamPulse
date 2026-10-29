@@ -34,6 +34,8 @@ button[aria-disabled="true"] { opacity: .65; cursor: not-allowed; }
 .error { color: #9d2424; border-left: 3px solid; padding-left: .75rem; }
 .success { color: #136341; }
 .session-list { list-style: none; padding: 0; }
-.session-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; border-bottom: 1px solid var(--border); padding: .75rem 0; }
+.session-list li { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .25rem 1rem; border-bottom: 1px solid var(--border); padding: .75rem 0; }
+.history-filter { border: 0; padding: 0; margin: 0 0 .5rem; display: flex; flex-wrap: wrap; gap: 1rem; }
+.history-filter legend { font-weight: 600; margin-bottom: .25rem; }
 footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 2rem; }
 @media (max-width: 700px) { .columns, .form-grid { grid-template-columns: 1fr; gap: 1rem; } .identity { display: none; } .hero { padding: 1.5rem; } main { padding: 1.5rem 1rem; } .card { padding: 1.25rem; } .action-heading { flex-wrap: wrap; } }

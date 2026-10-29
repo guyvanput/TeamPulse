@@ -10,6 +10,10 @@ import { beginDiscussion, changeDiscussionTiming, DiscussionError, type Discussi
 import { parkingProgress, nextAttemptNumber, ParkingError } from "./parking-lot";
 import { planAgendaMove, AgendaOrderError } from "./agenda-order";
 import { buildSummaryContent } from "./meeting-summary";
+import {
+  HISTORY_PAGE_SIZE, HistoryCursorError, decodeHistoryCursor, encodeHistoryCursor, historyFilterSchema, historyLifecycle,
+  historyPageSchema, type HistoryPage
+} from "./session-history";
 
 export class UserError extends Error {
   constructor(message: string, public readonly kind: "validation" | "denied" | "conflict" = "validation") {
@@ -80,8 +84,59 @@ export async function listTeams(actorId: string) {
   if (!actorId) throw new UserError("Sign in to continue.", "denied");
   return db.team.findMany({
     where: { memberships: { some: { userId: actorId } } },
-    include: { sessions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] } },
     orderBy: { name: "asc" }
+  });
+}
+
+const historyInput = z.object({
+  teamId: z.string().min(1).max(100),
+  filter: historyFilterSchema.default("ALL"),
+  cursor: z.string().optional()
+}).strict();
+
+export async function listSessionHistory(actorId: string, input: unknown): Promise<HistoryPage> {
+  const data = parse(historyInput, input);
+  const allowed = actorId ? await db.membership.findFirst({ where: { teamId: data.teamId, userId: actorId }, select: { userId: true } }) : null;
+  if (!allowed) throw new UserError("Team not found or access denied.", "denied");
+  let position: ReturnType<typeof decodeHistoryCursor> | undefined;
+  if (data.cursor !== undefined) {
+    try { position = decodeHistoryCursor(data.cursor); }
+    catch (error) { if (error instanceof HistoryCursorError) throw new UserError(error.message); throw error; }
+  }
+  const lifecycle: Prisma.TeamSessionWhereInput =
+    data.filter === "CLOSED" ? { kind: "FACILITATED", collectionState: "CLOSED" }
+    : data.filter === "IN_PROGRESS" ? { kind: "FACILITATED", OR: [{ collectionState: null }, { collectionState: { not: "CLOSED" } }] }
+    : {};
+  const keyset: Prisma.TeamSessionWhereInput = position
+    ? { OR: [{ createdAt: { lt: position.createdAt } }, { createdAt: position.createdAt, id: { lt: position.id } }] }
+    : {};
+  const found = await db.teamSession.findMany({
+    where: { teamId: data.teamId, AND: [lifecycle, keyset] },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: HISTORY_PAGE_SIZE + 1,
+    select: {
+      id: true, title: true, createdAt: true, kind: true, collectionState: true, votingState: true,
+      facilitator: { select: { name: true } },
+      summary: { select: { sessionId: true } },
+      _count: { select: { topics: { where: { removedAt: null } }, actions: { where: { status: { not: "DONE" } } } } }
+    }
+  });
+  const kept = found.slice(0, HISTORY_PAGE_SIZE);
+  const last = kept[kept.length - 1];
+  return historyPageSchema.parse({
+    filter: data.filter,
+    nextCursor: found.length > HISTORY_PAGE_SIZE && last ? encodeHistoryCursor(last) : null,
+    rows: kept.map((row) => {
+      const state = historyLifecycle(row);
+      const facilitated = row.kind === "FACILITATED";
+      return {
+        id: row.id, title: row.title, createdAt: row.createdAt.toISOString(), kind: row.kind, lifecycle: state,
+        facilitatorName: facilitated ? row.facilitator?.name ?? "Team member" : null,
+        topicCount: facilitated ? row._count.topics : null,
+        openActionCount: row._count.actions,
+        summaryAvailable: state === "CLOSED" ? row.summary !== null : null
+      };
+    })
   });
 }
 

@@ -32,6 +32,9 @@ cross-session follow-up, review history and facilitated topic collection.
 - [Approved session role/participant requirements](spec/session-participant-and-role-management.md)
 - [Approved session administration design](design/session-participant-and-role-management.md)
 - [Session administration implementation and evidence](tasks/session-administration.md)
+- [Approved session-history requirements](spec/session-history.md)
+- [Approved session-history design](design/session-history.md)
+- [Session-history implementation and evidence](tasks/session-history.md)
 - [Quality gates](docs/QUALITY_GATES.md)
 - [Local setup](docs/GETTING_STARTED.md)
 - [Release evidence and feedback loop](docs/RELEASE_AND_FEEDBACK.md)
@@ -54,7 +57,9 @@ generation. Local implementation/evidence is in `tasks/meeting-summary.md`;
 it is not released. Participant/role administration has approved Gates A/B;
 local implementation/evidence is tracked in `tasks/session-administration.md`.
 It retains original joins and ballots through removal/readmission and records
-explicit single-facilitator handovers without changing clocks. Application AI calls, invitations and public
+explicit single-facilitator handovers without changing clocks. The approved session-history slice replaces the
+unbounded home list with a read-only, paged, lifecycle-filtered history (no migration); see `tasks/session-history.md`.
+Application AI calls, invitations and public
 signup are not included.
 AI assists development; automated evidence and human decisions remain separate.
 

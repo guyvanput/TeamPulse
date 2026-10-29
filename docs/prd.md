@@ -3,7 +3,7 @@
 | Property | Value |
 |-----------|---------|
 | Product | TeamPulse |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Draft |
 | Author | Guy Van Put |
 | Date | 2026-10-28 |
@@ -345,6 +345,11 @@ on the same date. Local execution is tracked in `tasks/session-administration.md
 no publication, production operation or acceptance is authorized.
 Team membership administration, invitations, co-facilitators and Closed-role
 changes are excluded from this proposal.
+
+Session history (Release 1 gap found in the scope audit): the home page lists a team's sessions
+newest first in pages of 20 with a lifecycle filter (All / In progress / Closed), facilitator,
+this-session open-action count and summary availability. It is read-only with no migration; Gates A/B
+approved. See `spec/session-history.md`, `design/session-history.md` and `tasks/session-history.md`.
 
 The approved local implementation now supports immediate handover, retained
 removal/readmission and protected history across all contribution guards and
